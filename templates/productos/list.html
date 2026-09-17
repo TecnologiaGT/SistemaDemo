@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Productos{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Productos</h1><div class="subt">Catálogo de productos</div></div>
+  <a href="{% url 'productos:create' %}" class="btn btn-primario">+ Nuevo producto</a>
+</div>
+
+<form method="get" class="barra-acciones">
+  <input type="text" name="q" placeholder="Buscar por nombre o código..." value="{{ request.GET.q }}" style="max-width:280px;">
+  <button class="btn">Buscar</button>
+</form>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th></th><th>Código</th><th>Nombre</th><th>Precio compra</th><th>Precio venta</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for p in productos %}
+<tr>
+  <td>{% if p.foto_principal %}<img src="{{ p.foto_principal.url }}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;">{% else %}<span style="opacity:.4;">—</span>{% endif %}</td>
+  <td>{{ p.codigo|default:"—" }}</td>
+  <td>{{ p.nombre }}</td>
+  <td>Q {{ p.precio_compra }}</td>
+  <td>Q {{ p.precio_venta }}</td>
+  <td>{% if p.activo %}<span class="badge badge-ok">Activo</span>{% else %}<span class="badge badge-off">Inactivo</span>{% endif %}</td>
+  <td style="display:flex;gap:8px;">
+    <a href="{% url 'productos:update' p.pk %}" class="btn btn-sm">Editar</a>
+    <form method="post" action="{% url 'productos:toggle' p.pk %}" onsubmit="return confirm('¿Confirmas cambiar el estado de este producto?');">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if p.activo %}btn-peligro{% else %}btn-exito{% endif %}">{% if p.activo %}Desactivar{% else %}Activar{% endif %}</button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="7">No hay productos registrados todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

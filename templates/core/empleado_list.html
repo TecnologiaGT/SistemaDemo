@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Empleados{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Empleados</h1><div class="subt">Personal del negocio</div></div>
+  <a href="{% url 'core:empleado_create' %}" class="btn btn-primario">+ Nuevo empleado</a>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Nombre</th><th>Puesto</th><th>Tienda</th><th>Teléfono</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for e in empleados %}
+<tr>
+  <td>{{ e.nombre }}</td>
+  <td>{{ e.puesto|default:"—" }}</td>
+  <td>{{ e.tienda|default:"—" }}</td>
+  <td>{{ e.telefono|default:"—" }}</td>
+  <td>{% if e.activo %}<span class="badge badge-ok">Activo</span>{% else %}<span class="badge badge-off">Inactivo</span>{% endif %}</td>
+  <td style="display:flex;gap:8px;">
+    <a href="{% url 'core:empleado_update' e.pk %}" class="btn btn-sm">Editar</a>
+    <form method="post" action="{% url 'core:empleado_toggle' e.pk %}" onsubmit="return confirm('¿Confirmas cambiar el estado de este empleado?');">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if e.activo %}btn-peligro{% else %}btn-exito{% endif %}">{% if e.activo %}Desactivar{% else %}Activar{% endif %}</button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="6">No hay empleados registrados todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

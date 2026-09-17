@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Producto{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>{% if object %}Editar producto{% else %}Nuevo producto{% endif %}</h1></div>
+<div class="panel">
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="form-grid">
+    <div class="campo"><label>Código</label>{{ form.codigo }}{{ form.codigo.errors }}</div>
+    <div class="campo"><label>Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
+    <div class="campo"><label>Precio de compra</label>{{ form.precio_compra }}{{ form.precio_compra.errors }}</div>
+    <div class="campo"><label>Precio de venta</label>{{ form.precio_venta }}{{ form.precio_venta.errors }}</div>
+    <div class="campo" style="grid-column:1/-1;"><label>Descripción</label>{{ form.descripcion }}</div>
+    <div class="campo">
+      <label>Foto</label>{{ form.foto_principal }}
+      {% if object.foto_principal %}<img src="{{ object.foto_principal.url }}" style="margin-top:8px;max-width:120px;border-radius:8px;">{% endif %}
+    </div>
+    <div class="campo"><label><input type="checkbox" name="{{ form.activo.name }}" {% if form.activo.value %}checked{% endif %} style="width:auto;"> Activo</label></div>
+  </div>
+  <div class="barra-acciones" style="margin-top:16px;">
+    <button type="submit" class="btn btn-primario">Guardar</button>
+    <a href="{% url 'productos:list' %}" class="btn">Cancelar</a>
+  </div>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block titulo %}Clientes{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Clientes</h1><div class="subt">Base de clientes del negocio</div></div>
+  <a href="{% url 'clientes:create' %}" class="btn btn-primario">+ Nuevo cliente</a>
+</div>
+
+<form method="get" class="barra-acciones">
+  <input type="text" name="q" placeholder="Buscar por nombre..." value="{{ request.GET.q }}" style="max-width:280px;">
+  <button class="btn">Buscar</button>
+</form>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Nombre</th><th>NIT/Documento</th><th>Email</th><th>Teléfonos</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for c in clientes %}
+<tr>
+  <td>{{ c.nombre }}</td>
+  <td>{{ c.nit_documento|default:"—" }}</td>
+  <td>{{ c.email|default:"—" }}</td>
+  <td>{% for t in c.telefonos.all %}{{ t.telefono }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
+  <td>{% if c.activo %}<span class="badge badge-ok">Activo</span>{% else %}<span class="badge badge-off">Inactivo</span>{% endif %}</td>
+  <td style="display:flex;gap:8px;">
+    <a href="{% url 'clientes:update' c.pk %}" class="btn btn-sm">Editar</a>
+    <form method="post" action="{% url 'clientes:toggle' c.pk %}" onsubmit="return confirm('¿Confirmas cambiar el estado de este cliente?');">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if c.activo %}btn-peligro{% else %}btn-exito{% endif %}">{% if c.activo %}Desactivar{% else %}Activar{% endif %}</button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="6">No hay clientes registrados todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+{% if is_paginated %}
+<div class="barra-acciones" style="margin-top:14px;">
+  {% if page_obj.has_previous %}<a class="btn btn-sm" href="?page={{ page_obj.previous_page_number }}">« Anterior</a>{% endif %}
+  <span class="subt">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a class="btn btn-sm" href="?page={{ page_obj.next_page_number }}">Siguiente »</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

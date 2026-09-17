@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Compra #{{ compra.numero }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Compra #{{ compra.numero }}</h1><div class="subt">{{ compra.fecha|date:"d/m/Y H:i" }} · {{ compra.tienda }}</div></div>
+  <a href="{% url 'compras:list' %}" class="btn">Volver</a>
+</div>
+
+<div class="panel">
+  <div class="form-grid">
+    <div><label>Proveedor</label>{{ compra.proveedor }}</div>
+    <div><label>Encargado</label>{{ compra.empleado|default:"—" }}</div>
+    <div><label>Estado</label>{% if compra.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulada</span>{% endif %}</div>
+  </div>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+<tbody>
+{% for d in compra.detalle.all %}
+<tr><td>{{ d.producto.nombre }}</td><td>{{ d.cantidad }}</td><td>Q {{ d.precio_unitario }}</td><td>Q {{ d.subtotal }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div class="panel" style="text-align:right;">
+  <span class="total-grande">Total: Q {{ compra.total }}</span>
+</div>
+{% endblock %}

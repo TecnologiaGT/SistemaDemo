@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Sistema{% endblock %} · Control de Inventarios y Ventas</title>
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<header class="topbar">
+  <a href="{% url 'core:home' %}" class="marca"><span class="punto"></span> CONTROL · INVENTARIOS Y VENTAS</a>
+  <nav>
+    <a href="{% url 'core:home' %}">Inicio</a>
+    <span class="usuario">{{ user.get_full_name|default:user.username }}</span>
+    <form method="post" action="{% url 'core:logout' %}" style="display:inline;margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm">Salir</button>
+    </form>
+  </nav>
+</header>
+{% endif %}
+
+<div class="contenedor">
+  {% if messages %}
+  <div class="mensajes">
+    {% for message in messages %}
+    <div class="mensaje mensaje-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% block contenido %}{% endblock %}
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

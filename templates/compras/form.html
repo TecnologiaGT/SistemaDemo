@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block titulo %}Comprar{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>Comprar</h1><div class="subt">Registrar una compra a proveedor</div></div>
+
+<form method="post" id="form-compra">
+  {% csrf_token %}
+  <div class="form-caja">
+    <div>
+      <div class="panel">
+        <div class="form-grid">
+          <div class="campo">
+            <label>Tienda</label>
+            <select name="tienda" required>
+              <option value="">Selecciona...</option>
+              {% for t in tiendas %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="campo">
+            <label>Proveedor</label>
+            <select name="proveedor" required>
+              <option value="">Selecciona...</option>
+              {% for p in proveedores %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="campo">
+            <label>Encargado</label>
+            <select name="empleado">
+              <option value="">— sin asignar —</option>
+              {% for e in empleados %}<option value="{{ e.id }}" {% if empleado_actual and empleado_actual.id == e.id %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h1 style="font-size:1.1rem;margin-top:0;">Agregar producto</h1>
+        <div class="form-grid">
+          <div class="campo" style="grid-column:span 2;">
+            <label>Producto</label>
+            <select id="sel-producto">
+              <option value="">Selecciona un producto...</option>
+              {% for p in productos %}
+              <option value="{{ p.id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio_compra }}">
+                {% if p.codigo %}[{{ p.codigo }}] {% endif %}{{ p.nombre }} — compra Q {{ p.precio_compra }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="campo">
+            <label>Cantidad</label>
+            <input type="number" id="in-cantidad" min="1" value="1">
+          </div>
+        </div>
+        <button type="button" id="btn-agregar-linea" class="btn btn-primario">+ Agregar línea</button>
+      </div>
+
+      <div class="panel">
+        <h1 style="font-size:1.1rem;margin-top:0;">Detalle de la compra</h1>
+        <div class="tabla-wrap">
+          <table class="tabla" id="tabla-carrito">
+            <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th></th></tr></thead>
+            <tbody id="cuerpo-carrito">
+              <tr id="fila-vacio"><td colspan="5">Todavía no hay productos agregados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div style="color:var(--texto-tenue);font-size:.85rem;">Total de la compra</div>
+        <div class="total-grande" id="total-venta">Q 0.00</div>
+        <button type="submit" class="btn btn-primario" style="width:100%;justify-content:center;margin-top:16px;" id="btn-guardar" disabled>Guardar compra</button>
+        <a href="{% url 'core:home' %}" class="btn" style="width:100%;justify-content:center;margin-top:8px;">Cancelar</a>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const cuerpo = document.getElementById("cuerpo-carrito");
+  const filaVacio = document.getElementById("fila-vacio");
+  const totalEl = document.getElementById("total-venta");
+  const btnGuardar = document.getElementById("btn-guardar");
+  const form = document.getElementById("form-compra");
+
+  function formatoQ(n) { return "Q " + n.toFixed(2); }
+
+  function recalcularTotal() {
+    let total = 0;
+    cuerpo.querySelectorAll(".fila-carrito").forEach((fila) => {
+      const cant = parseFloat(fila.querySelector('.in-cant').value) || 0;
+      const precio = parseFloat(fila.querySelector('.in-precio').value) || 0;
+      const sub = cant * precio;
+      fila.querySelector(".celda-subtotal").textContent = formatoQ(sub);
+      total += sub;
+    });
+    totalEl.textContent = formatoQ(total);
+    const hayFilas = cuerpo.querySelectorAll(".fila-carrito").length > 0;
+    btnGuardar.disabled = !hayFilas;
+    filaVacio.style.display = hayFilas ? "none" : "";
+  }
+
+  document.getElementById("btn-agregar-linea").addEventListener("click", function () {
+    const sel = document.getElementById("sel-producto");
+    const opt = sel.options[sel.selectedIndex];
+    if (!sel.value) { alert("Selecciona un producto."); return; }
+    const cantidad = parseInt(document.getElementById("in-cantidad").value) || 1;
+    const precio = parseFloat(opt.dataset.precio) || 0;
+
+    const fila = document.createElement("tr");
+    fila.className = "fila-carrito";
+    fila.innerHTML = `
+      <td>${opt.dataset.nombre}
+        <input type="hidden" name="producto_id[]" value="${sel.value}">
+      </td>
+      <td><input type="number" min="1" value="${cantidad}" class="in-cant" name="cantidad[]" style="width:80px;"></td>
+      <td><input type="number" min="0" step="0.01" value="${precio.toFixed(2)}" class="in-precio" name="precio_unitario[]" style="width:110px;"></td>
+      <td class="celda-subtotal">${formatoQ(cantidad * precio)}</td>
+      <td><button type="button" class="btn btn-sm btn-peligro btn-quitar-linea">Quitar</button></td>
+    `;
+    cuerpo.appendChild(fila);
+    fila.querySelectorAll(".in-cant, .in-precio").forEach((i) => i.addEventListener("input", recalcularTotal));
+    fila.querySelector(".btn-quitar-linea").addEventListener("click", function () {
+      fila.remove();
+      recalcularTotal();
+    });
+    recalcularTotal();
+    sel.value = "";
+  });
+
+  form.addEventListener("submit", function () {
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = "Guardando...";
+  });
+})();
+</script>
+{% endblock %}

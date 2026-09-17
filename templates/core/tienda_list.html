@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Tiendas{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Tiendas</h1><div class="subt">Sucursales del negocio</div></div>
+  <a href="{% url 'core:tienda_create' %}" class="btn btn-primario">+ Nueva tienda</a>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Nombre</th><th>Dirección</th><th>Teléfono</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for t in tiendas %}
+<tr>
+  <td>{{ t.nombre }}</td>
+  <td>{{ t.direccion|default:"—" }}</td>
+  <td>{{ t.telefono|default:"—" }}</td>
+  <td>{% if t.activa %}<span class="badge badge-ok">Activa</span>{% else %}<span class="badge badge-off">Inactiva</span>{% endif %}</td>
+  <td style="display:flex;gap:8px;">
+    <a href="{% url 'core:tienda_update' t.pk %}" class="btn btn-sm">Editar</a>
+    <form method="post" action="{% url 'core:tienda_toggle' t.pk %}" onsubmit="return confirm('¿Confirmas cambiar el estado de esta tienda?');">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if t.activa %}btn-peligro{% else %}btn-exito{% endif %}">{% if t.activa %}Desactivar{% else %}Activar{% endif %}</button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="5">No hay tiendas registradas todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div>
+    <h1>Panel principal</h1>
+    <div class="subt">Selecciona un módulo para comenzar</div>
+  </div>
+</div>
+
+<div class="grid-menu">
+  {% for m in modulos %}
+  <a class="tarjeta-menu" href="{% url m.url %}">
+    <span class="icono">{{ m.icono }}</span>
+    <span class="nombre">{{ m.nombre }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

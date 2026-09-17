@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Tienda{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>{% if object %}Editar tienda{% else %}Nueva tienda{% endif %}</h1></div>
+<div class="panel">
+<form method="post">
+  {% csrf_token %}
+  <div class="form-grid">
+    <div class="campo"><label>Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
+    <div class="campo"><label>Teléfono</label>{{ form.telefono }}{{ form.telefono.errors }}</div>
+    <div class="campo" style="grid-column:1/-1;"><label>Dirección</label>{{ form.direccion }}{{ form.direccion.errors }}</div>
+    <div class="campo"><label><input type="checkbox" name="{{ form.activa.name }}" {% if form.activa.value %}checked{% endif %} style="width:auto;"> Activa</label></div>
+  </div>
+  <div class="barra-acciones" style="margin-top:16px;">
+    <button type="submit" class="btn btn-primario">Guardar</button>
+    <a href="{% url 'core:tienda_list' %}" class="btn">Cancelar</a>
+  </div>
+</form>
+</div>
+{% endblock %}

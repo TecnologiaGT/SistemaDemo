@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Factura #{{ venta.numero }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>{% if venta.tipo == 'V' %}Factura de Venta{% else %}Nota de Devolución{% endif %} #{{ venta.numero }}</h1>
+  <div class="subt">{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.tienda }}</div></div>
+  <div class="barra-acciones">
+    <button onclick="window.print()" class="btn btn-primario">🖨️ Imprimir</button>
+    <a href="{% url 'ventas:list' %}" class="btn">Volver</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="form-grid">
+    <div><label>Cliente</label>{{ venta.cliente|default:"Consumidor Final" }}</div>
+    <div><label>Vendedor</label>{{ venta.empleado|default:"—" }}</div>
+    <div><label>Estado</label>{% if venta.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulada</span>{% endif %}</div>
+    {% if venta.venta_original %}<div><label>Devolución de</label>Factura #{{ venta.venta_original.numero }}</div>{% endif %}
+  </div>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+<tbody>
+{% for d in venta.detalle.all %}
+<tr><td>{{ d.producto.nombre }}</td><td>{{ d.cantidad }}</td><td>Q {{ d.precio_unitario }}</td><td>Q {{ d.subtotal }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div class="panel" style="text-align:right;">
+  <span class="total-grande">Total: Q {{ venta.total }}</span>
+</div>
+{% endblock %}

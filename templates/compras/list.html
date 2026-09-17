@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Compras Registradas{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Compras Registradas</h1><div class="subt">Historial de compras a proveedores</div></div>
+  <a href="{% url 'compras:create' %}" class="btn btn-primario">+ Nueva compra</a>
+</div>
+
+<form method="get" class="barra-acciones">
+  <select name="tienda">
+    <option value="">Todas las tiendas</option>
+    {% for t in tiendas %}<option value="{{ t.id }}" {% if request.GET.tienda == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
+  </select>
+  <button class="btn">Filtrar</button>
+</form>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>No.</th><th>Fecha</th><th>Tienda</th><th>Proveedor</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for c in compras %}
+<tr>
+  <td>{{ c.numero }}</td>
+  <td>{{ c.fecha|date:"d/m/Y H:i" }}</td>
+  <td>{{ c.tienda }}</td>
+  <td>{{ c.proveedor }}</td>
+  <td>Q {{ c.total }}</td>
+  <td>{% if c.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulada</span>{% endif %}</td>
+  <td style="display:flex;gap:8px;">
+    <a href="{% url 'compras:detalle' c.numero %}" class="btn btn-sm">Ver</a>
+    {% if c.estado == 'V' %}
+    <form method="post" action="{% url 'compras:anular' c.numero %}" onsubmit="return confirm('¿Confirmas anular esta compra? Esto resta los productos del inventario.');">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-peligro">Anular</button>
+    </form>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="7">No hay compras registradas todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

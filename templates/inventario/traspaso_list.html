@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block titulo %}Traspasos{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Traspasos entre tiendas</h1><div class="subt">Movimientos de productos entre sucursales</div></div>
+  <a href="{% url 'inventario:traspaso_create' %}" class="btn btn-primario">+ Nuevo traspaso</a>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>No.</th><th>Fecha</th><th>Origen</th><th>Destino</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for t in traspasos %}
+<tr>
+  <td>{{ t.numero }}</td>
+  <td>{{ t.fecha|date:"d/m/Y H:i" }}</td>
+  <td>{{ t.tienda_origen }}</td>
+  <td>{{ t.tienda_destino }}</td>
+  <td>{% if t.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulado</span>{% endif %}</td>
+  <td>
+    {% if t.estado == 'V' %}
+    <form method="post" action="{% url 'inventario:traspaso_anular' t.numero %}" onsubmit="return confirm('¿Confirmas anular este traspaso? Esto revierte el movimiento de inventario.');">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-peligro">Anular</button>
+    </form>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="6">No hay traspasos registrados todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

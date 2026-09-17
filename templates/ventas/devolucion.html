@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titulo %}Devolución de Venta{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>Devolución de Venta</h1><div class="subt">Busca la factura original para devolverla</div></div>
+
+<form method="get" class="barra-acciones">
+  <input type="number" name="numero" placeholder="No. de factura" value="{{ request.GET.numero }}" style="max-width:200px;">
+  <button class="btn">Buscar</button>
+</form>
+
+{% if venta_original %}
+<div class="panel">
+  <div class="form-grid">
+    <div><label>Factura</label>#{{ venta_original.numero }}</div>
+    <div><label>Fecha</label>{{ venta_original.fecha|date:"d/m/Y H:i" }}</div>
+    <div><label>Cliente</label>{{ venta_original.cliente|default:"Consumidor Final" }}</div>
+    <div><label>Total</label>Q {{ venta_original.total }}</div>
+  </div>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+<tbody>
+{% for d in venta_original.detalle.all %}
+<tr><td>{{ d.producto.nombre }}</td><td>{{ d.cantidad }}</td><td>Q {{ d.precio_unitario }}</td><td>Q {{ d.subtotal }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<form method="post" onsubmit="return confirm('¿Confirmas devolver esta venta completa? Los productos regresarán al inventario.');">
+  {% csrf_token %}
+  <input type="hidden" name="numero" value="{{ venta_original.numero }}">
+  <button type="submit" class="btn btn-primario">Confirmar devolución completa</button>
+</form>
+{% endif %}
+{% endblock %}
