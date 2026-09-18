@@ -3,9 +3,11 @@ from django.db.models import Count, Sum
 from django.shortcuts import render
 from django.views import View
 
+from core.models import Personalizacion
+from core.paletas import paleta_es_oscura
 from core.permissions import AdminRequiredMixin
 from ventas.models import Venta
-from .utils import parsear_fecha, rango_mes_actual
+from .utils import calcular_pastel, geometria_pastel, parsear_fecha, rango_mes_actual
 
 
 class ReportesMenuView(LoginRequiredMixin, AdminRequiredMixin, View):
@@ -40,12 +42,17 @@ class VentasPorTiendaView(LoginRequiredMixin, AdminRequiredMixin, View):
         total_general = ventas.aggregate(total=Sum("total"))["total"] or 0
         num_ventas_total = ventas.count()
 
+        oscura = paleta_es_oscura(Personalizacion.obtener().paleta)
+        segmentos = calcular_pastel(filas, "tienda__nombre", "total", oscura, "Sin tienda")
+
         return render(request, self.template_name, {
             "filas": filas,
             "total_general": total_general,
             "num_ventas_total": num_ventas_total,
             "fecha_inicio": fecha_inicio,
             "fecha_fin": fecha_fin,
+            "segmentos": segmentos,
+            "geo_pastel": geometria_pastel(),
         })
 
 
@@ -67,10 +74,15 @@ class VentasPorEmpleadoView(LoginRequiredMixin, AdminRequiredMixin, View):
         total_general = ventas.aggregate(total=Sum("total"))["total"] or 0
         num_ventas_total = ventas.count()
 
+        oscura = paleta_es_oscura(Personalizacion.obtener().paleta)
+        segmentos = calcular_pastel(filas, "empleado__nombre", "total", oscura, "Sin vendedor asignado")
+
         return render(request, self.template_name, {
             "filas": filas,
             "total_general": total_general,
             "num_ventas_total": num_ventas_total,
             "fecha_inicio": fecha_inicio,
             "fecha_fin": fecha_fin,
+            "segmentos": segmentos,
+            "geo_pastel": geometria_pastel(),
         })

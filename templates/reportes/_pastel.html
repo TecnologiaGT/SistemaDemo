@@ -1,0 +1,32 @@
+{% comment %}
+Gráfica de pastel reutilizable para los reportes. Recibe "segmentos"
+(lista de dicts: etiqueta, total, color, porcentaje, dasharray, dashoffset)
+y "geo_pastel" (r, centro, viewbox, trazo). La tabla del reporte sigue
+mostrando el detalle completo: esta gráfica es un resumen de hasta 3
+categorías + "Otros", no la única fuente del dato.
+{% endcomment %}
+{% if segmentos %}
+<div class="panel pastel-panel">
+  <h1 style="font-size:1.05rem;margin-top:0;">Distribución del total</h1>
+  <div class="pastel-wrap">
+    <svg viewBox="0 0 {{ geo_pastel.viewbox }} {{ geo_pastel.viewbox }}" width="190" height="190" class="pastel-svg" role="img" aria-label="Gráfica de pastel con la distribución del total">
+      <g transform="rotate(-90 {{ geo_pastel.centro }} {{ geo_pastel.centro }})">
+        {% for s in segmentos %}
+        <circle cx="{{ geo_pastel.centro }}" cy="{{ geo_pastel.centro }}" r="{{ geo_pastel.r }}"
+                fill="none" stroke="{{ s.color }}" stroke-width="{{ geo_pastel.trazo }}"
+                stroke-dasharray="{{ s.dasharray }}" stroke-dashoffset="{{ s.dashoffset }}"></circle>
+        {% endfor %}
+      </g>
+    </svg>
+    <ul class="pastel-leyenda">
+      {% for s in segmentos %}
+      <li>
+        <span class="pastel-punto" style="background:{{ s.color }};"></span>
+        <span class="pastel-etiqueta">{{ s.etiqueta }}</span>
+        <span class="pastel-valor">Q {{ s.total|floatformat:2 }} · {{ s.porcentaje }}%</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
