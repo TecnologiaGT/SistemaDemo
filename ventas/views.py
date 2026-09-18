@@ -8,6 +8,7 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 
 from core.models import Tienda, Empleado
+from core.permissions import usuario_es_admin
 from clientes.models import Cliente
 from productos.models import Producto
 from inventario.models import Inventario
@@ -30,23 +31,51 @@ class CajaView(LoginRequiredMixin, View):
     template_name = "ventas/caja.html"
 
     def get(self, request):
+        es_admin = usuario_es_admin(request.user)
+        empleado_actual = _empleado_actual(request)
+
+        if not es_admin and (not empleado_actual or not empleado_actual.tienda_id):
+            messages.error(
+                request,
+                "Tu usuario no tiene una tienda asignada. Pide a un administrador que te asigne una en Empleados.",
+            )
+            return redirect("core:home")
+
         return render(request, self.template_name, {
+            "es_admin": es_admin,
             "tiendas": Tienda.objects.filter(activa=True),
             "clientes": Cliente.objects.filter(activo=True),
             "productos": Producto.objects.filter(activo=True),
             "empleados": Empleado.objects.filter(activo=True),
-            "empleado_actual": _empleado_actual(request),
+            "empleado_actual": empleado_actual,
         })
 
     def post(self, request):
-        tienda_id = request.POST.get("tienda")
+        es_admin = usuario_es_admin(request.user)
+        empleado_actual = _empleado_actual(request)
         cliente_id = request.POST.get("cliente") or None
-        empleado_id = request.POST.get("empleado") or None
         producto_ids = request.POST.getlist("producto_id[]")
         cantidades = request.POST.getlist("cantidad[]")
         precios = request.POST.getlist("precio_unitario[]")
 
-        tienda = get_object_or_404(Tienda, pk=tienda_id) if tienda_id else None
+        if es_admin:
+            # Un administrador puede vender a nombre de otra tienda/vendedor.
+            tienda_id = request.POST.get("tienda")
+            empleado_id = request.POST.get("empleado") or None
+            tienda = get_object_or_404(Tienda, pk=tienda_id) if tienda_id else None
+            empleado = Empleado.objects.filter(pk=empleado_id).first() if empleado_id else empleado_actual
+        else:
+            # Un empleado normal siempre vende con su propia tienda y como sí mismo,
+            # sin importar qué se haya enviado en el formulario.
+            if not empleado_actual or not empleado_actual.tienda_id:
+                messages.error(
+                    request,
+                    "Tu usuario no tiene una tienda asignada. Pide a un administrador que te asigne una en Empleados.",
+                )
+                return redirect("core:home")
+            tienda = empleado_actual.tienda
+            empleado = empleado_actual
+
         if not tienda:
             messages.error(request, "Debes seleccionar una tienda.")
             return redirect("ventas:caja")
@@ -55,7 +84,6 @@ class CajaView(LoginRequiredMixin, View):
             return redirect("ventas:caja")
 
         cliente = Cliente.objects.filter(pk=cliente_id).first() if cliente_id else None
-        empleado = Empleado.objects.filter(pk=empleado_id).first() if empleado_id else _empleado_actual(request)
 
         venta = Venta.objects.create(tipo="V", estado="V", tienda=tienda, empleado=empleado, cliente=cliente)
         for pid, cant, precio in zip(producto_ids, cantidades, precios):

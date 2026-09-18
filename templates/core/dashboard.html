@@ -1,5 +1,19 @@
 {% extends "base.html" %}
 {% block titulo %}Inicio{% endblock %}
+
+{% block extra_css %}
+{% if tiene_foto_fondo %}
+<style>
+  body {
+    background-image: linear-gradient(rgba(10,14,30,0.72), rgba(10,14,30,0.82)), url('{% url "core:personalizacion_foto" %}?v={{ personalizacion.actualizado|date:"U" }}');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+</style>
+{% endif %}
+{% endblock %}
+
 {% block contenido %}
 <div class="titulo-pagina">
   <div>

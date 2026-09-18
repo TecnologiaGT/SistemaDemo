@@ -18,4 +18,7 @@ urlpatterns = [
     path("empleados/nuevo/", views.EmpleadoCreateView.as_view(), name="empleado_create"),
     path("empleados/<int:pk>/editar/", views.EmpleadoUpdateView.as_view(), name="empleado_update"),
     path("empleados/<int:pk>/toggle/", views.EmpleadoToggleView.as_view(), name="empleado_toggle"),
+
+    path("personalizacion/", views.PersonalizacionView.as_view(), name="personalizacion"),
+    path("personalizacion/foto/", views.PersonalizacionFotoView.as_view(), name="personalizacion_foto"),
 ]

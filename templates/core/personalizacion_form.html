@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block titulo %}Personalización{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>Personalización</h1></div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="mensaje mensaje-error">{{ form.non_field_errors.0 }}</div>
+  {% endif %}
+
+  <div class="panel">
+    <h1 style="font-size:1.1rem;margin-top:0;">Paleta de colores</h1>
+    <div class="subt" style="margin-bottom:14px;">Se aplica a todo el sistema.</div>
+    <div class="paleta-opciones">
+      {% for valor, etiqueta in form.paleta.field.choices %}
+      <label class="paleta-opcion">
+        <input type="radio" name="paleta" value="{{ valor }}" {% if form.paleta.value == valor %}checked{% endif %}>
+        <span class="paleta-muestra paleta-muestra-{{ valor }}"></span>
+        {{ etiqueta }}
+      </label>
+      {% endfor %}
+    </div>
+    {{ form.paleta.errors }}
+  </div>
+
+  <div class="panel">
+    <h1 style="font-size:1.1rem;margin-top:0;">Foto de fondo</h1>
+    <div class="subt" style="margin-bottom:14px;">Se muestra únicamente en la pantalla principal de menús.</div>
+
+    {% if config.foto_fondo %}
+    <div style="margin-bottom:14px;">
+      <img src="{% url 'core:personalizacion_foto' %}?v={{ config.actualizado|date:'U' }}" alt="Foto de fondo actual" style="max-width:320px;border-radius:var(--radio);border:1px solid var(--borde);display:block;">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      {{ form.quitar_foto }} Quitar la foto de fondo actual
+    </label>
+    {% endif %}
+
+    <div class="campo">
+      <label>{% if config.foto_fondo %}Reemplazar foto{% else %}Subir foto{% endif %}</label>
+      {{ form.foto }}
+      <div class="subt" style="margin-top:4px;">{{ form.foto.help_text }}</div>
+      {{ form.foto.errors }}
+    </div>
+  </div>
+
+  <div class="barra-acciones">
+    <button type="submit" class="btn btn-primario">Guardar</button>
+    <a href="{% url 'core:home' %}" class="btn">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .paleta-opciones { display: flex; flex-wrap: wrap; gap: 14px; }
+  .paleta-opcion {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .paleta-opcion:has(input:checked) { border-color: var(--acento); box-shadow: 0 0 0 1px var(--acento); }
+  .paleta-muestra { width: 20px; height: 20px; border-radius: 50%; display: inline-block; border: 1px solid rgba(255,255,255,0.25); }
+  .paleta-muestra-azul { background: #1b2d68; }
+  .paleta-muestra-verde { background: #0f5132; }
+  .paleta-muestra-morado { background: #4a2d80; }
+  .paleta-muestra-gris { background: #3a3f47; }
+  .paleta-muestra-vino { background: #701f2e; }
+</style>
+{% endblock %}

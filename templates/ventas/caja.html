@@ -11,10 +11,15 @@
         <div class="form-grid">
           <div class="campo">
             <label>Tienda</label>
+            {% if es_admin %}
             <select name="tienda" required>
               <option value="">Selecciona...</option>
-              {% for t in tiendas %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}
+              {% for t in tiendas %}<option value="{{ t.id }}" {% if empleado_actual and empleado_actual.tienda_id == t.id %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
             </select>
+            {% else %}
+            <input type="text" value="{{ empleado_actual.tienda.nombre }}" disabled>
+            <div class="subt" style="margin-top:4px;">Asignada a tu usuario.</div>
+            {% endif %}
           </div>
           <div class="campo">
             <label>Cliente</label>
@@ -25,10 +30,15 @@
           </div>
           <div class="campo">
             <label>Vendedor</label>
+            {% if es_admin %}
             <select name="empleado">
               <option value="">— sin asignar —</option>
               {% for e in empleados %}<option value="{{ e.id }}" {% if empleado_actual and empleado_actual.id == e.id %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
             </select>
+            {% else %}
+            <input type="text" value="{{ empleado_actual.nombre }}" disabled>
+            <div class="subt" style="margin-top:4px;">Eres tú, según tu usuario.</div>
+            {% endif %}
           </div>
         </div>
       </div>

@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block titulo %}Sistema{% endblock %} · Control de Inventarios y Ventas</title>
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<style>
+  :root {
+    {% for nombre, valor in paleta_variables.items %}--{{ nombre }}: {{ valor }};
+    {% endfor %}
+  }
+</style>
 {% block extra_css %}{% endblock %}
 </head>
 <body>
