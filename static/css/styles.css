@@ -268,5 +268,15 @@ input:focus, select:focus, textarea:focus {
   max-height: 80vh;
   overflow-y: auto;
 }
+.modal-caja-ancha { max-width: 640px; }
+
+.fila-buscador { cursor: pointer; }
+.fila-buscador:hover { background: rgba(79,124,255,0.12); }
+
+input.campo-consulta {
+  cursor: pointer;
+  background: var(--superficie) !important;
+}
+input.campo-consulta::placeholder { color: var(--texto-tenue); opacity: 0.9; }
 
 .confirm-check { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--texto-tenue); }

@@ -67,14 +67,23 @@ class ClienteToggleView(LoginRequiredMixin, View):
 
 
 def buscar_clientes(request):
-    """Endpoint JSON usado por el buscador rápido (Shift+F12) en Caja/Factura."""
+    """Endpoint JSON usado por el buscador rápido (Shift+F12) en Caja: busca
+    por nombre o por teléfono."""
+    from django.db.models import Q
     from django.http import JsonResponse
     q = request.GET.get("q", "")
     resultados = []
     if len(q) >= 2:
-        clientes = Cliente.objects.filter(nombre__icontains=q, activo=True)[:15]
+        clientes = (
+            Cliente.objects.filter(Q(nombre__icontains=q) | Q(telefonos__telefono__icontains=q), activo=True)
+            .distinct()[:15]
+        )
         for c in clientes:
+            telefono = c.telefonos.first()
             resultados.append({
-                "id": c.id, "nombre": c.nombre, "nit_documento": c.nit_documento, "email": c.email,
+                "id": c.id,
+                "nombre": c.nombre,
+                "nit_documento": c.nit_documento,
+                "telefono": telefono.telefono if telefono else "",
             })
     return JsonResponse({"resultados": resultados})

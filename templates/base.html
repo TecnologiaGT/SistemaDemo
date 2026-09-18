@@ -41,6 +41,25 @@
   {% block contenido %}{% endblock %}
 </div>
 
+{% if user.is_authenticated %}
+<div class="modal-fondo" id="modal-buscador">
+  <div class="modal-caja modal-caja-ancha">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h2 id="modal-buscador-titulo" style="margin:0;font-size:1.05rem;">Buscar</h2>
+      <button type="button" class="btn btn-sm" id="modal-buscador-cerrar">✕</button>
+    </div>
+    <input type="text" id="modal-buscador-input" placeholder="Escribe para buscar...">
+    <div class="tabla-wrap" style="margin-top:12px;">
+      <table class="tabla">
+        <thead id="modal-buscador-encabezado"></thead>
+        <tbody id="modal-buscador-cuerpo"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/buscador.js' %}"></script>
+{% endif %}
+
 {% block extra_js %}{% endblock %}
 </body>
 </html>

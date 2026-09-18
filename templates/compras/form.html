@@ -11,17 +11,15 @@
         <div class="form-grid">
           <div class="campo">
             <label>Tienda</label>
-            <select name="tienda" required>
+            <select name="tienda" id="campo-tienda-id" required>
               <option value="">Selecciona...</option>
               {% for t in tiendas %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}
             </select>
           </div>
           <div class="campo">
             <label>Proveedor</label>
-            <select name="proveedor" required>
-              <option value="">Selecciona...</option>
-              {% for p in proveedores %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}
-            </select>
+            <input type="text" id="campo-proveedor-texto" class="campo-consulta" readonly placeholder="Clic o Shift+F12 para buscar un proveedor">
+            <input type="hidden" name="proveedor" id="campo-proveedor-id" value="">
           </div>
           <div class="campo">
             <label>Encargado</label>
@@ -38,14 +36,9 @@
         <div class="form-grid">
           <div class="campo" style="grid-column:span 2;">
             <label>Producto</label>
-            <select id="sel-producto">
-              <option value="">Selecciona un producto...</option>
-              {% for p in productos %}
-              <option value="{{ p.id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio_compra }}">
-                {% if p.codigo %}[{{ p.codigo }}] {% endif %}{{ p.nombre }} — compra Q {{ p.precio_compra }}
-              </option>
-              {% endfor %}
-            </select>
+            <input type="text" id="campo-producto-texto" class="campo-consulta" readonly placeholder="Clic o Shift+F12 para buscar un producto">
+            <input type="hidden" id="campo-producto-id" value="">
+            <div class="subt" id="producto-existencia" style="margin-top:4px;"></div>
           </div>
           <div class="campo">
             <label>Cantidad</label>
@@ -89,7 +82,52 @@
   const btnGuardar = document.getElementById("btn-guardar");
   const form = document.getElementById("form-compra");
 
+  let productoSeleccionado = null;
+
   function formatoQ(n) { return "Q " + n.toFixed(2); }
+
+  // --- Campo de consulta: Proveedor (por nombre o teléfono) ---
+  crearCampoBusqueda({
+    campoTexto: "campo-proveedor-texto",
+    campoId: "campo-proveedor-id",
+    url: "{% url 'proveedores:buscar' %}",
+    titulo: "Buscar proveedor",
+    placeholder: "Nombre o teléfono...",
+    columnas: [
+      { campo: "nombre", titulo: "Nombre" },
+      { campo: "telefono", titulo: "Teléfono" },
+      { campo: "nit_documento", titulo: "NIT" },
+    ],
+    enfocarDespues: "campo-producto-texto",
+  });
+
+  // --- Campo de consulta: Producto (por nombre) ---
+  crearCampoBusqueda({
+    campoTexto: "campo-producto-texto",
+    campoId: "campo-producto-id",
+    url: "{% url 'productos:buscar' %}",
+    titulo: "Buscar producto",
+    placeholder: "Nombre del producto...",
+    columnas: [
+      { campo: "codigo", titulo: "Código" },
+      { campo: "nombre", titulo: "Nombre" },
+      { campo: "precio_compra", titulo: "Precio compra" },
+      { campo: "existencia", titulo: "Existencia" },
+    ],
+    parametrosExtra: function () {
+      return { tienda_id: document.getElementById("campo-tienda-id").value };
+    },
+    textoResultado: function (r) {
+      return (r.codigo ? "[" + r.codigo + "] " : "") + r.nombre + " — compra Q " + r.precio_compra;
+    },
+    alEscoger: function (r) {
+      productoSeleccionado = r;
+      const existEl = document.getElementById("producto-existencia");
+      existEl.textContent = r.existencia !== null && r.existencia !== undefined
+        ? "Existencia en esta tienda: " + r.existencia : "";
+    },
+    enfocarDespues: "in-cantidad",
+  });
 
   function recalcularTotal() {
     let total = 0;
@@ -107,17 +145,17 @@
   }
 
   document.getElementById("btn-agregar-linea").addEventListener("click", function () {
-    const sel = document.getElementById("sel-producto");
-    const opt = sel.options[sel.selectedIndex];
-    if (!sel.value) { alert("Selecciona un producto."); return; }
+    if (!productoSeleccionado) { alert("Busca y escoge un producto (clic o Shift+F12)."); return; }
     const cantidad = parseInt(document.getElementById("in-cantidad").value) || 1;
-    const precio = parseFloat(opt.dataset.precio) || 0;
+    const precio = parseFloat(productoSeleccionado.precio_compra) || 0;
+    const nombre = productoSeleccionado.nombre;
+    const idProducto = productoSeleccionado.id;
 
     const fila = document.createElement("tr");
     fila.className = "fila-carrito";
     fila.innerHTML = `
-      <td>${opt.dataset.nombre}
-        <input type="hidden" name="producto_id[]" value="${sel.value}">
+      <td>${nombre}
+        <input type="hidden" name="producto_id[]" value="${idProducto}">
       </td>
       <td><input type="number" min="1" value="${cantidad}" class="in-cant" name="cantidad[]" style="width:80px;"></td>
       <td><input type="number" min="0" step="0.01" value="${precio.toFixed(2)}" class="in-precio" name="precio_unitario[]" style="width:110px;"></td>
@@ -131,10 +169,19 @@
       recalcularTotal();
     });
     recalcularTotal();
-    sel.value = "";
+
+    productoSeleccionado = null;
+    document.getElementById("campo-producto-texto").value = "";
+    document.getElementById("producto-existencia").textContent = "";
+    document.getElementById("in-cantidad").value = 1;
   });
 
-  form.addEventListener("submit", function () {
+  form.addEventListener("submit", function (e) {
+    if (!document.getElementById("campo-proveedor-id").value) {
+      e.preventDefault();
+      alert("Busca y escoge un proveedor (clic o Shift+F12).");
+      return;
+    }
     btnGuardar.disabled = true;
     btnGuardar.textContent = "Guardando...";
   });

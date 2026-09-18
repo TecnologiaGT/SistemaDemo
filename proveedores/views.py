@@ -66,13 +66,23 @@ class ProveedorToggleView(LoginRequiredMixin, View):
 
 
 def buscar_proveedores(request):
+    """Endpoint JSON usado por el buscador rápido (Shift+F12) en Comprar:
+    busca por nombre o por teléfono."""
+    from django.db.models import Q
     from django.http import JsonResponse
     q = request.GET.get("q", "")
     resultados = []
     if len(q) >= 2:
-        proveedores = Proveedor.objects.filter(nombre__icontains=q, activo=True)[:15]
+        proveedores = (
+            Proveedor.objects.filter(Q(nombre__icontains=q) | Q(telefonos__telefono__icontains=q), activo=True)
+            .distinct()[:15]
+        )
         for p in proveedores:
+            telefono = p.telefonos.first()
             resultados.append({
-                "id": p.id, "nombre": p.nombre, "nit_documento": p.nit_documento,
+                "id": p.id,
+                "nombre": p.nombre,
+                "nit_documento": p.nit_documento,
+                "telefono": telefono.telefono if telefono else "",
             })
     return JsonResponse({"resultados": resultados})

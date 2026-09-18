@@ -12,21 +12,23 @@
           <div class="campo">
             <label>Tienda</label>
             {% if es_admin %}
-            <select name="tienda" required>
+            <select name="tienda" id="campo-tienda-id" required>
               <option value="">Selecciona...</option>
               {% for t in tiendas %}<option value="{{ t.id }}" {% if empleado_actual and empleado_actual.tienda_id == t.id %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
             </select>
             {% else %}
             <input type="text" value="{{ empleado_actual.tienda.nombre }}" disabled>
+            <input type="hidden" id="campo-tienda-id" value="{{ empleado_actual.tienda_id|default:'' }}">
             <div class="subt" style="margin-top:4px;">Asignada a tu usuario.</div>
             {% endif %}
           </div>
           <div class="campo">
             <label>Cliente</label>
-            <select name="cliente">
-              <option value="">Consumidor Final</option>
-              {% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
-            </select>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="campo-cliente-texto" class="campo-consulta" readonly placeholder="Consumidor Final — clic o Shift+F12 para buscar">
+              <button type="button" class="btn btn-sm" id="btn-limpiar-cliente" title="Volver a Consumidor Final">✕</button>
+            </div>
+            <input type="hidden" name="cliente" id="campo-cliente-id" value="">
           </div>
           <div class="campo">
             <label>Vendedor</label>
@@ -48,14 +50,9 @@
         <div class="form-grid">
           <div class="campo" style="grid-column:span 2;">
             <label>Producto</label>
-            <select id="sel-producto">
-              <option value="">Selecciona un producto...</option>
-              {% for p in productos %}
-              <option value="{{ p.id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio_venta }}" data-codigo="{{ p.codigo|default:'' }}">
-                {% if p.codigo %}[{{ p.codigo }}] {% endif %}{{ p.nombre }} — Q {{ p.precio_venta }}
-              </option>
-              {% endfor %}
-            </select>
+            <input type="text" id="campo-producto-texto" class="campo-consulta" readonly placeholder="Clic o Shift+F12 para buscar un producto">
+            <input type="hidden" id="campo-producto-id" value="">
+            <div class="subt" id="producto-existencia" style="margin-top:4px;"></div>
           </div>
           <div class="campo">
             <label>Cantidad</label>
@@ -99,7 +96,57 @@
   const btnGuardar = document.getElementById("btn-guardar");
   const form = document.getElementById("form-venta");
 
+  let productoSeleccionado = null;
+
   function formatoQ(n) { return "Q " + n.toFixed(2); }
+
+  // --- Campo de consulta: Cliente (por nombre o teléfono) ---
+  crearCampoBusqueda({
+    campoTexto: "campo-cliente-texto",
+    campoId: "campo-cliente-id",
+    url: "{% url 'clientes:buscar' %}",
+    titulo: "Buscar cliente",
+    placeholder: "Nombre o teléfono...",
+    columnas: [
+      { campo: "nombre", titulo: "Nombre" },
+      { campo: "telefono", titulo: "Teléfono" },
+      { campo: "nit_documento", titulo: "NIT" },
+    ],
+    enfocarDespues: "campo-producto-texto",
+  });
+
+  document.getElementById("btn-limpiar-cliente").addEventListener("click", function () {
+    document.getElementById("campo-cliente-texto").value = "";
+    document.getElementById("campo-cliente-id").value = "";
+  });
+
+  // --- Campo de consulta: Producto (por nombre) ---
+  crearCampoBusqueda({
+    campoTexto: "campo-producto-texto",
+    campoId: "campo-producto-id",
+    url: "{% url 'productos:buscar' %}",
+    titulo: "Buscar producto",
+    placeholder: "Nombre del producto...",
+    columnas: [
+      { campo: "codigo", titulo: "Código" },
+      { campo: "nombre", titulo: "Nombre" },
+      { campo: "precio_venta", titulo: "Precio venta" },
+      { campo: "existencia", titulo: "Existencia" },
+    ],
+    parametrosExtra: function () {
+      return { tienda_id: document.getElementById("campo-tienda-id").value };
+    },
+    textoResultado: function (r) {
+      return (r.codigo ? "[" + r.codigo + "] " : "") + r.nombre + " — Q " + r.precio_venta;
+    },
+    alEscoger: function (r) {
+      productoSeleccionado = r;
+      const existEl = document.getElementById("producto-existencia");
+      existEl.textContent = r.existencia !== null && r.existencia !== undefined
+        ? "Existencia en esta tienda: " + r.existencia : "";
+    },
+    enfocarDespues: "in-cantidad",
+  });
 
   function recalcularTotal() {
     let total = 0;
@@ -117,17 +164,17 @@
   }
 
   document.getElementById("btn-agregar-linea").addEventListener("click", function () {
-    const sel = document.getElementById("sel-producto");
-    const opt = sel.options[sel.selectedIndex];
-    if (!sel.value) { alert("Selecciona un producto."); return; }
+    if (!productoSeleccionado) { alert("Busca y escoge un producto (clic o Shift+F12)."); return; }
     const cantidad = parseInt(document.getElementById("in-cantidad").value) || 1;
-    const precio = parseFloat(opt.dataset.precio) || 0;
+    const precio = parseFloat(productoSeleccionado.precio_venta) || 0;
+    const nombre = productoSeleccionado.nombre;
+    const idProducto = productoSeleccionado.id;
 
     const fila = document.createElement("tr");
     fila.className = "fila-carrito";
     fila.innerHTML = `
-      <td>${opt.dataset.nombre}
-        <input type="hidden" name="producto_id[]" value="${sel.value}">
+      <td>${nombre}
+        <input type="hidden" name="producto_id[]" value="${idProducto}">
       </td>
       <td><input type="number" min="1" value="${cantidad}" class="in-cant" name="cantidad[]" style="width:80px;"></td>
       <td><input type="number" min="0" step="0.01" value="${precio.toFixed(2)}" class="in-precio" name="precio_unitario[]" style="width:110px;"></td>
@@ -141,7 +188,11 @@
       recalcularTotal();
     });
     recalcularTotal();
-    sel.value = "";
+
+    productoSeleccionado = null;
+    document.getElementById("campo-producto-texto").value = "";
+    document.getElementById("producto-existencia").textContent = "";
+    document.getElementById("in-cantidad").value = 1;
   });
 
   form.addEventListener("submit", function () {
