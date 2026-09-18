@@ -15,8 +15,8 @@ from .forms import TiendaForm, EmpleadoForm, PersonalizacionForm
 from .permissions import usuario_es_admin, AdminRequiredMixin
 
 MODULOS = [
-    {"nombre": "Vender", "icono": "🧾", "url": "ventas:caja"},
-    {"nombre": "Clientes", "icono": "🧑‍🤝‍🧑", "url": "clientes:list"},
+    {"nombre": "Vender", "icono": "💰", "url": "ventas:caja"},
+    {"nombre": "Clientes", "icono": "🤝", "url": "clientes:list"},
     {"nombre": "Ventas Registradas", "icono": "📄", "url": "ventas:list"},
     {"nombre": "Devolución de Venta", "icono": "↩️", "url": "ventas:devolucion"},
     {"nombre": "Comprar", "icono": "🛒", "url": "compras:create"},
