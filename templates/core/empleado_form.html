@@ -2,20 +2,37 @@
 {% block titulo %}Empleado{% endblock %}
 {% block contenido %}
 <div class="titulo-pagina"><h1>{% if object %}Editar empleado{% else %}Nuevo empleado{% endif %}</h1></div>
-<div class="panel">
+
 <form method="post">
   {% csrf_token %}
-  <div class="form-grid">
-    <div class="campo"><label>Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
-    <div class="campo"><label>Puesto</label>{{ form.puesto }}{{ form.puesto.errors }}</div>
-    <div class="campo"><label>Teléfono</label>{{ form.telefono }}{{ form.telefono.errors }}</div>
-    <div class="campo"><label>Tienda</label>{{ form.tienda }}{{ form.tienda.errors }}</div>
-    <div class="campo"><label><input type="checkbox" name="{{ form.activo.name }}" {% if form.activo.value %}checked{% endif %} style="width:auto;"> Activo</label></div>
+  <div class="panel">
+    <div class="form-grid">
+      <div class="campo"><label>Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
+      <div class="campo"><label>Puesto</label>{{ form.puesto }}{{ form.puesto.errors }}</div>
+      <div class="campo"><label>Teléfono</label>{{ form.telefono }}{{ form.telefono.errors }}</div>
+      <div class="campo"><label>Tienda</label>{{ form.tienda }}{{ form.tienda.errors }}</div>
+      <div class="campo"><label><input type="checkbox" name="{{ form.activo.name }}" {% if form.activo.value %}checked{% endif %} style="width:auto;"> Activo</label></div>
+    </div>
   </div>
-  <div class="barra-acciones" style="margin-top:16px;">
+
+  <div class="panel">
+    <h1 style="font-size:1.1rem;margin-top:0;">Acceso al sistema</h1>
+    <div class="form-grid">
+      <div class="campo"><label>Tipo de usuario</label>{{ form.tipo_usuario }}{{ form.tipo_usuario.errors }}</div>
+      <div class="campo">
+        <label>Usuario</label>{{ form.username }}{{ form.username.errors }}
+        <div class="subt" style="margin-top:4px;">{{ form.username.help_text }}</div>
+      </div>
+      <div class="campo">
+        <label>Contraseña</label>{{ form.password }}{{ form.password.errors }}
+        <div class="subt" style="margin-top:4px;">{{ form.password.help_text }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="barra-acciones">
     <button type="submit" class="btn btn-primario">Guardar</button>
     <a href="{% url 'core:empleado_list' %}" class="btn">Cancelar</a>
   </div>
 </form>
-</div>
 {% endblock %}

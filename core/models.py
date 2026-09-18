@@ -19,6 +19,11 @@ class Tienda(models.Model):
 
 
 class Empleado(models.Model):
+    TIPOS_USUARIO = [
+        ("admin", "Administrador"),
+        ("empleado", "Empleado"),
+    ]
+
     usuario = models.OneToOneField(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="empleado"
     )
@@ -28,8 +33,13 @@ class Empleado(models.Model):
     tienda = models.ForeignKey(
         Tienda, on_delete=models.SET_NULL, null=True, blank=True, related_name="empleados"
     )
+    tipo_usuario = models.CharField(max_length=10, choices=TIPOS_USUARIO, default="empleado")
     activo = models.BooleanField(default=True)
     creado = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def es_admin(self):
+        return self.tipo_usuario == "admin"
 
     class Meta:
         verbose_name = "Empleado"

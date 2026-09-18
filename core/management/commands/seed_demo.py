@@ -12,11 +12,20 @@ class Command(BaseCommand):
     help = "Crea datos de ejemplo (tiendas, empleados, clientes, proveedores, productos e inventario) para la demo."
 
     def handle(self, *args, **options):
-        if not User.objects.filter(username="admin").exists():
-            User.objects.create_superuser("admin", "admin@example.com", "Admin1234!")
+        admin_user, admin_user_creado = User.objects.get_or_create(
+            username="admin", defaults={"email": "admin@example.com", "is_staff": True, "is_superuser": True}
+        )
+        if admin_user_creado:
+            admin_user.set_password("Admin1234!")
+            admin_user.save()
             self.stdout.write(self.style.SUCCESS("Superusuario creado: admin / Admin1234!"))
         else:
             self.stdout.write("El superusuario 'admin' ya existe.")
+
+        Empleado.objects.get_or_create(
+            nombre="admin",
+            defaults={"puesto": "Administrador", "tipo_usuario": "admin", "usuario": admin_user},
+        )
 
         tienda_central, _ = Tienda.objects.get_or_create(nombre="Tienda Central", defaults={"direccion": "Zona 1, Ciudad Central", "telefono": "555-0100"})
         tienda_norte, _ = Tienda.objects.get_or_create(nombre="Sucursal Norte", defaults={"direccion": "Zona 4, Sector Norte", "telefono": "555-0200"})
