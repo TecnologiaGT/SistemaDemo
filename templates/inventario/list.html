@@ -3,9 +3,12 @@
 {% block contenido %}
 <div class="titulo-pagina">
   <div><h1>Inventario</h1><div class="subt">{% if modo == "tienda" %}Existencias por tienda{% else %}Existencias generales (todas las tiendas){% endif %}</div></div>
+  <div class="barra-acciones no-imprimir">
+    <button onclick="window.print()" class="btn btn-primario">🖨️ Imprimir</button>
+  </div>
 </div>
 
-<form method="get" class="barra-acciones">
+<form method="get" class="barra-acciones no-imprimir">
   <select name="tienda">
     <option value="">— General (todas las tiendas) —</option>
     {% for t in tiendas %}<option value="{{ t.id }}" {% if tienda_id == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}

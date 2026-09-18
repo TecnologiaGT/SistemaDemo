@@ -27,6 +27,7 @@ MODULOS = [
     {"nombre": "Traspasos", "icono": "🔁", "url": "inventario:traspaso_list"},
     {"nombre": "Tiendas", "icono": "🏪", "url": "core:tienda_list"},
     {"nombre": "Empleados", "icono": "🪪", "url": "core:empleado_list", "solo_admin": True},
+    {"nombre": "Consultas y Reportes", "icono": "📊", "url": "reportes:menu", "solo_admin": True},
     {"nombre": "Personalización", "icono": "🎨", "url": "core:personalizacion", "solo_admin": True},
 ]
 

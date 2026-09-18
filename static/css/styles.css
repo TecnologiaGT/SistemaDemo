@@ -279,4 +279,16 @@ input.campo-consulta {
 }
 input.campo-consulta::placeholder { color: var(--texto-tenue); opacity: 0.9; }
 
+/* Impresión: solo se imprime el contenido (títulos y tablas), sin barra
+   superior, formularios de filtro, botones ni mensajes. */
+@media print {
+  .topbar, .mensajes, .barra-acciones, .no-imprimir, form { display: none !important; }
+  body { background: #fff !important; color: #000; }
+  .contenedor { padding: 0; max-width: 100%; }
+  .panel, .tabla-wrap { border: none; background: none; }
+  table.tabla { background: none; }
+  table.tabla th, table.tabla td { color: #000; border-color: #999; }
+  .subt { color: #333; }
+}
+
 .confirm-check { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--texto-tenue); }
