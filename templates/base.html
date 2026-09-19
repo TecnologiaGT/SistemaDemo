@@ -5,6 +5,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block titulo %}Sistema{% endblock %} · {{ personalizacion.nombre_sistema }}</title>
+<link rel="manifest" href="{% url 'core:manifest' %}">
+<meta name="theme-color" content="{{ tema_color }}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="T&amp;P Demo">
+<link rel="apple-touch-icon" href="{% static 'pwa/icon-192.png' %}">
+<link rel="icon" href="{% static 'pwa/icon-192.png' %}">
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 <style>
   :root {
@@ -61,5 +69,12 @@
 {% endif %}
 
 {% block extra_js %}{% endblock %}
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("{% url 'core:service_worker' %}").catch(function () {});
+    });
+  }
+</script>
 </body>
 </html>
