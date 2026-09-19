@@ -13,6 +13,18 @@ def usuario_es_admin(user):
     return bool(empleado and empleado.tipo_usuario == "admin")
 
 
+def usuario_es_superusuario_oculto(user):
+    """True solo para una cuenta de Django que sea superusuario pero que
+    NO esté vinculada a ningún Empleado (como "walde"): son cuentas de
+    mantenimiento del sistema, no de un empleado real, así que nunca
+    aparecen en Empleados ni en ningún listado/selector del sistema, y son
+    las únicas que ven el cuadro de "Reiniciar Sistema" en el panel
+    principal."""
+    if not user.is_authenticated or not user.is_superuser:
+        return False
+    return not hasattr(user, "empleado")
+
+
 class AdminRequiredMixin:
     """Restringe una vista a usuarios con permiso de administrador.
     Usar junto con LoginRequiredMixin (LoginRequiredMixin primero en el MRO)."""

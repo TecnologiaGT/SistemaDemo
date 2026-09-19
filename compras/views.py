@@ -78,7 +78,7 @@ class CompraListView(LoginRequiredMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("tienda", "proveedor")
+        qs = super().get_queryset().select_related("tienda", "proveedor", "empleado")
         tienda_id = self.request.GET.get("tienda")
         if tienda_id:
             qs = qs.filter(tienda_id=tienda_id)

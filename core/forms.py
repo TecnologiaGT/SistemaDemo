@@ -14,9 +14,14 @@ class EmpleadoForm(forms.ModelForm):
     username = forms.CharField(
         label="Usuario del sistema", required=False,
         help_text="Déjalo vacío si este empleado no va a iniciar sesión en el sistema.",
+        # autocomplete="off" evita que el navegador sugiera nombres de
+        # usuario ya guardados (como "admin") en vez de dejar ver la
+        # sugerencia automática basada en el nombre (ver empleado_form.html).
+        widget=forms.TextInput(attrs={"autocomplete": "off"}),
     )
     password = forms.CharField(
-        label="Contraseña", required=False, widget=forms.PasswordInput(render_value=False),
+        label="Contraseña", required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"}),
         help_text="Déjala vacía para no cambiarla (o si el empleado no tiene usuario).",
     )
 

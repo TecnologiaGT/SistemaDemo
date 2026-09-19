@@ -5,6 +5,9 @@
 
 <form method="post">
   {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="mensaje mensaje-error">{{ form.non_field_errors.0 }}</div>
+  {% endif %}
   <div class="panel">
     <div class="form-grid">
       <div class="campo"><label>Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
@@ -35,4 +38,33 @@
     <a href="{% url 'core:empleado_list' %}" class="btn">Cancelar</a>
   </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mientras el campo "Usuario" esté vacío, sugerir automáticamente el
+// primer nombre (en minúsculas, sin acentos) como usuario, en vez de
+// dejar que el navegador sugiera nombres ya usados antes (como "admin").
+// Apenas la persona escribe algo ahí a mano, dejamos de tocarlo.
+(function () {
+  var nombre = document.getElementById("id_nombre");
+  var usuario = document.getElementById("id_username");
+  if (!nombre || !usuario) return;
+
+  var editadoManualmente = usuario.value.trim() !== "";
+  usuario.addEventListener("input", function () {
+    editadoManualmente = true;
+  });
+
+  function quitarAcentos(texto) {
+    return texto.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  nombre.addEventListener("input", function () {
+    if (editadoManualmente) return;
+    var primerNombre = nombre.value.trim().split(/\s+/)[0] || "";
+    usuario.value = quitarAcentos(primerNombre).toLowerCase().replace(/[^a-z0-9]/g, "");
+  });
+})();
+</script>
 {% endblock %}

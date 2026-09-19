@@ -30,4 +30,44 @@
   </a>
   {% endfor %}
 </div>
+
+{% if es_superusuario_oculto %}
+<div class="panel" style="margin-top:24px;">
+  <h1 style="font-size:1.1rem;margin-top:0;">Reiniciar Sistema</h1>
+  <div class="form-grid">
+    <div>
+      <h2 style="font-size:0.92rem;margin:0 0 10px;">Contraseña del usuario "admin"</h2>
+      <form method="post" action="{% url 'core:reiniciar_sistema' %}">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="password_admin">
+        <div class="campo">
+          <label>Nueva contraseña</label>
+          <input type="password" name="nueva_password" autocomplete="new-password" required minlength="8">
+        </div>
+        <div class="campo">
+          <label>Confirmar contraseña</label>
+          <input type="password" name="confirmar_password" autocomplete="new-password" required minlength="8">
+        </div>
+        <button type="submit" class="btn btn-primario btn-sm">Actualizar contraseña de admin</button>
+      </form>
+    </div>
+    <div>
+      <h2 style="font-size:0.92rem;margin:0 0 10px;">Tipo de sistema</h2>
+      <form method="post" action="{% url 'core:reiniciar_sistema' %}">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="tipo_sistema">
+        <div class="campo">
+          <label>Tipo de negocio de la demo</label>
+          <select name="tipo_sistema">
+            {% for valor, etiqueta in tipos_sistema %}
+            <option value="{{ valor }}" {% if personalizacion.tipo_sistema == valor %}selected{% endif %}>{{ etiqueta }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-sm">Cambiar tipo de sistema</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

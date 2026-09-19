@@ -21,4 +21,6 @@ urlpatterns = [
 
     path("personalizacion/", views.PersonalizacionView.as_view(), name="personalizacion"),
     path("personalizacion/foto/", views.PersonalizacionFotoView.as_view(), name="personalizacion_foto"),
+
+    path("reiniciar-sistema/", views.ReiniciarSistemaView.as_view(), name="reiniciar_sistema"),
 ]

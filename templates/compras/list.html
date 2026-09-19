@@ -16,13 +16,14 @@
 
 <div class="tabla-wrap">
 <table class="tabla">
-<thead><tr><th>No.</th><th>Fecha</th><th>Tienda</th><th>Proveedor</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+<thead><tr><th>No.</th><th>Fecha</th><th>Tienda</th><th>Usuario</th><th>Proveedor</th><th>Total</th><th>Estado</th><th></th></tr></thead>
 <tbody>
 {% for c in compras %}
 <tr>
   <td>{{ c.numero }}</td>
   <td>{{ c.fecha|date:"d/m/Y H:i" }}</td>
   <td>{{ c.tienda }}</td>
+  <td>{{ c.empleado|default:"—" }}</td>
   <td>{{ c.proveedor }}</td>
   <td>Q {{ c.total }}</td>
   <td>{% if c.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulada</span>{% endif %}</td>
@@ -37,7 +38,7 @@
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="7">No hay compras registradas todavía.</td></tr>
+<tr><td colspan="8">No hay compras registradas todavía.</td></tr>
 {% endfor %}
 </tbody>
 </table>

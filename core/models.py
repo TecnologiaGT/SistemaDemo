@@ -59,9 +59,21 @@ class Personalizacion(models.Model):
     (no en el disco del servidor) para que sobreviva cada despliegue en
     Render, cuyo disco no es permanente.
     """
+    # Con qué tipo de negocio se está haciendo la demo en este momento.
+    # Cambiarlo solo cambia el nombre que se muestra del sistema (ver
+    # nombre_sistema); no reordena menús ni cambia ninguna otra pantalla.
+    TIPOS_SISTEMA = [
+        ("ropa", "Tienda de Ropa"),
+        ("libreria", "Librería"),
+        ("farmacia", "Farmacia"),
+        ("abarroteria", "Abarrotería"),
+    ]
+    NOMBRE_BASE = "ALMACENES T&P · SISTEMA PARA DEMO"
+
     paleta = models.CharField(max_length=20, choices=OPCIONES_PALETA, default=PALETA_DEFECTO)
     foto_fondo = models.BinaryField(null=True, blank=True)
     foto_fondo_tipo = models.CharField(max_length=50, blank=True)  # ej. "image/jpeg"
+    tipo_sistema = models.CharField(max_length=20, choices=TIPOS_SISTEMA, default="ropa")
     actualizado = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -70,6 +82,10 @@ class Personalizacion(models.Model):
 
     def __str__(self):
         return "Personalización del sistema"
+
+    @property
+    def nombre_sistema(self):
+        return f"{self.NOMBRE_BASE} - {self.get_tipo_sistema_display()}"
 
     @classmethod
     def obtener(cls):

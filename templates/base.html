@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block titulo %}Sistema{% endblock %} · ALMACENES T&amp;P - Sistema para Demo</title>
+<title>{% block titulo %}Sistema{% endblock %} · {{ personalizacion.nombre_sistema }}</title>
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 <style>
   :root {
@@ -17,7 +17,7 @@
 <body>
 {% if user.is_authenticated %}
 <header class="topbar">
-  <a href="{% url 'core:home' %}" class="marca"><span class="punto"></span> ALMACENES T&amp;P · SISTEMA PARA DEMO</a>
+  <a href="{% url 'core:home' %}" class="marca"><span class="punto"></span> {{ personalizacion.nombre_sistema }}</a>
   <nav>
     <a href="{% url 'core:home' %}">Inicio</a>
     <span class="usuario">{{ user.get_full_name|default:user.username }}</span>

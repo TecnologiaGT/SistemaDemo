@@ -12,7 +12,7 @@ from PIL import Image
 
 from .models import Tienda, Empleado, Personalizacion
 from .forms import TiendaForm, EmpleadoForm, PersonalizacionForm
-from .permissions import usuario_es_admin, AdminRequiredMixin
+from .permissions import usuario_es_admin, usuario_es_superusuario_oculto, AdminRequiredMixin
 
 MODULOS = [
     {"nombre": "Vender", "icono": "💰", "url": "ventas:caja"},
@@ -40,6 +40,8 @@ def dashboard(request):
     return render(request, "core/dashboard.html", {
         "modulos": modulos,
         "tiene_foto_fondo": bool(config.foto_fondo),
+        "es_superusuario_oculto": usuario_es_superusuario_oculto(request.user),
+        "tipos_sistema": Personalizacion.TIPOS_SISTEMA,
     })
 
 
@@ -97,6 +99,52 @@ class PersonalizacionFotoView(LoginRequiredMixin, View):
         return HttpResponse(
             bytes(config.foto_fondo), content_type=config.foto_fondo_tipo or "image/jpeg"
         )
+
+
+class ReiniciarSistemaView(LoginRequiredMixin, View):
+    """Solo para el superusuario "oculto" (ver usuario_es_superusuario_oculto):
+    cambiar la contraseña del usuario "admin" y cambiar el tipo de sistema
+    de la demo. No usa AdminRequiredMixin a propósito: un administrador
+    normal (como "admin") NO debe poder llegar aquí ni por URL directa."""
+
+    def post(self, request):
+        if not usuario_es_superusuario_oculto(request.user):
+            messages.error(request, "No tienes permiso para esta acción.")
+            return redirect("core:home")
+
+        accion = request.POST.get("accion")
+
+        if accion == "password_admin":
+            nueva = request.POST.get("nueva_password", "")
+            confirmar = request.POST.get("confirmar_password", "")
+            if len(nueva) < 8:
+                messages.error(request, "La nueva contraseña debe tener al menos 8 caracteres.")
+            elif nueva != confirmar:
+                messages.error(request, "Las dos contraseñas no coinciden.")
+            else:
+                admin_user = User.objects.filter(username="admin").first()
+                if admin_user:
+                    admin_user.set_password(nueva)
+                    admin_user.save()
+                    messages.success(request, "Contraseña de \"admin\" actualizada correctamente.")
+                else:
+                    messages.error(request, "No se encontró ningún usuario \"admin\".")
+
+        elif accion == "tipo_sistema":
+            tipo = request.POST.get("tipo_sistema")
+            validos = dict(Personalizacion.TIPOS_SISTEMA)
+            if tipo in validos:
+                config = Personalizacion.obtener()
+                config.tipo_sistema = tipo
+                config.save(update_fields=["tipo_sistema"])
+                messages.success(request, f"Tipo de sistema cambiado a {validos[tipo]}.")
+            else:
+                messages.error(request, "Tipo de sistema inválido.")
+
+        else:
+            messages.error(request, "Acción no reconocida.")
+
+        return redirect("core:home")
 
 
 # --- Tiendas ---

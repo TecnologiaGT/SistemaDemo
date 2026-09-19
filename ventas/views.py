@@ -109,7 +109,7 @@ class VentaListView(LoginRequiredMixin, ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("tienda", "cliente")
+        qs = super().get_queryset().select_related("tienda", "cliente", "empleado")
         tienda_id = self.request.GET.get("tienda")
         if tienda_id:
             qs = qs.filter(tienda_id=tienda_id)
