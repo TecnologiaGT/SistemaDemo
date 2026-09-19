@@ -67,6 +67,26 @@
         <button type="submit" class="btn btn-sm">Cambiar tipo de sistema</button>
       </form>
     </div>
+    <div>
+      <h2 style="font-size:0.92rem;margin:0 0 10px;">Datos de la demo</h2>
+      <p style="font-size:0.85rem;color:var(--texto-tenue,#666);margin:0 0 10px;">
+        {% if snapshot_guardado %}
+          Último estado guardado: {{ snapshot_fecha|date:"d/m/Y H:i" }}.
+        {% else %}
+          Todavía no has guardado ningún estado.
+        {% endif %}
+      </p>
+      <form method="post" action="{% url 'core:reiniciar_sistema' %}" style="margin-bottom:10px;">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="guardar_snapshot">
+        <button type="submit" class="btn btn-sm">Guardar estado actual</button>
+      </form>
+      <form method="post" action="{% url 'core:reiniciar_sistema' %}" onsubmit="return confirm('Esto borrará todo lo que el cliente haya agregado/editado y volverá al último estado guardado, y le pondrá una contraseña nueva a \'admin\'. ¿Continuar?');">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="restaurar_datos">
+        <button type="submit" class="btn btn-primario btn-sm" {% if not snapshot_guardado %}disabled{% endif %}>Restaurar datos</button>
+      </form>
+    </div>
   </div>
 </div>
 {% endif %}

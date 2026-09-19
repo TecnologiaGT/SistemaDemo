@@ -91,3 +91,28 @@ class Personalizacion(models.Model):
     def obtener(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class SnapshotDemo(models.Model):
+    """Guarda (un solo registro, pk=1) una "foto" completa de los datos de
+    demo -clientes, proveedores, productos, ventas, compras, inventario,
+    etc.- para poder restaurarlos después con "Reiniciar Sistema".
+
+    Los datos se guardan serializados con las herramientas internas de
+    Django (django.core.serializers, formato "json"), no con
+    dumpdata/loaddata ni con ningún comando ejecutado desde la web."""
+    datos = models.TextField(null=True, blank=True)
+    creado = models.DateTimeField(null=True, blank=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Foto de datos de demo"
+        verbose_name_plural = "Foto de datos de demo"
+
+    def __str__(self):
+        return "Foto de datos de demo"
+
+    @classmethod
+    def obtener(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

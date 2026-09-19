@@ -7,12 +7,14 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, View
 from PIL import Image
 
-from .models import Tienda, Empleado, Personalizacion
+from .models import Tienda, Empleado, Personalizacion, SnapshotDemo
 from .forms import TiendaForm, EmpleadoForm, PersonalizacionForm
 from .permissions import usuario_es_admin, usuario_es_superusuario_oculto, AdminRequiredMixin
+from . import snapshot_demo
 
 MODULOS = [
     {"nombre": "Vender", "icono": "💰", "url": "ventas:caja"},
@@ -37,12 +39,17 @@ def dashboard(request):
     es_admin = usuario_es_admin(request.user)
     modulos = [m for m in MODULOS if not m.get("solo_admin") or es_admin]
     config = Personalizacion.obtener()
-    return render(request, "core/dashboard.html", {
+    contexto = {
         "modulos": modulos,
         "tiene_foto_fondo": bool(config.foto_fondo),
         "es_superusuario_oculto": usuario_es_superusuario_oculto(request.user),
         "tipos_sistema": Personalizacion.TIPOS_SISTEMA,
-    })
+    }
+    if contexto["es_superusuario_oculto"]:
+        foto = SnapshotDemo.obtener()
+        contexto["snapshot_guardado"] = bool(foto.datos)
+        contexto["snapshot_fecha"] = foto.creado
+    return render(request, "core/dashboard.html", contexto)
 
 
 # --- Personalización (foto de fondo del menú + paleta de colores) ---
@@ -140,6 +147,45 @@ class ReiniciarSistemaView(LoginRequiredMixin, View):
                 messages.success(request, f"Tipo de sistema cambiado a {validos[tipo]}.")
             else:
                 messages.error(request, "Tipo de sistema inválido.")
+
+        elif accion == "guardar_snapshot":
+            foto = SnapshotDemo.obtener()
+            foto.datos = snapshot_demo.construir_snapshot()
+            foto.creado = timezone.now()
+            foto.save(update_fields=["datos", "creado", "actualizado"])
+            messages.success(
+                request,
+                "Estado actual guardado. Desde ahora, \"Restaurar datos\" volverá exactamente a este punto.",
+            )
+
+        elif accion == "restaurar_datos":
+            foto = SnapshotDemo.obtener()
+            if not foto.datos:
+                messages.error(
+                    request,
+                    "Todavía no hay ningún estado guardado. Usa primero \"Guardar estado actual\".",
+                )
+                return redirect("core:home")
+            try:
+                snapshot_demo.restaurar_snapshot(foto.datos)
+            except Exception as error:
+                messages.error(request, f"No se pudo restaurar: {error}")
+                return redirect("core:home")
+
+            nueva_password = snapshot_demo.generar_password_aleatoria()
+            admin_user = User.objects.filter(username="admin").first()
+            if admin_user:
+                admin_user.set_password(nueva_password)
+                admin_user.save()
+                messages.success(
+                    request,
+                    f"Datos restaurados correctamente. Nueva contraseña de \"admin\": {nueva_password}",
+                )
+            else:
+                messages.warning(
+                    request,
+                    "Datos restaurados, pero no se encontró ningún usuario \"admin\" para asignarle contraseña nueva.",
+                )
 
         else:
             messages.error(request, "Acción no reconocida.")
