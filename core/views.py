@@ -15,6 +15,7 @@ from .models import Tienda, Empleado, Personalizacion, SnapshotDemo
 from .forms import TiendaForm, EmpleadoForm, PersonalizacionForm
 from .permissions import usuario_es_admin, usuario_es_superusuario_oculto, AdminRequiredMixin
 from . import snapshot_demo
+from .catalogo_productos import renombrar_productos_segun_tipo
 
 MODULOS = [
     {"nombre": "Vender", "icono": "💰", "url": "ventas:caja"},
@@ -144,6 +145,7 @@ class ReiniciarSistemaView(LoginRequiredMixin, View):
                 config = Personalizacion.obtener()
                 config.tipo_sistema = tipo
                 config.save(update_fields=["tipo_sistema"])
+                renombrar_productos_segun_tipo(tipo)
                 messages.success(request, f"Tipo de sistema cambiado a {validos[tipo]}.")
             else:
                 messages.error(request, "Tipo de sistema inválido.")
