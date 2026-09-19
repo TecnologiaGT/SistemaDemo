@@ -11,6 +11,11 @@ A propósito NO usa django.core.management.call_command("dumpdata"/"loaddata")
 sino las funciones de más bajo nivel django.core.serializers.serialize /
 deserialize directamente: así no se parece a un "ejecutor de comandos" de
 propósito general, solo hace esta única cosa.
+
+Personalizacion (tipo de sistema, paleta, foto de fondo) a propósito NO
+forma parte de la foto: es una configuración de "cómo se ve" la demo, no
+un dato de negocio, y el usuario la cambia libremente en cualquier momento
+sin que "Restaurar datos" se la vuelva a pisar.
 """
 import secrets
 import string
@@ -40,8 +45,8 @@ USUARIOS_PROTEGIDOS = {"walde", "admin"}
 # y se vuelve a crear en este mismo orden (padres antes que hijos).
 # ProductoFoto se deja fuera a propósito: es una función que no se usa en
 # la demo y sus archivos no sobreviven en el disco temporal de Render.
+# Personalizacion se deja fuera a propósito (ver docstring del módulo).
 _MODELOS = [
-    Personalizacion,
     Tienda,
     User,  # solo los usuarios ligados a un Empleado; ver _usuarios_de_empleados()
     Empleado,
@@ -53,6 +58,12 @@ _MODELOS = [
     Compra, CompraDetalle,
     Traspaso, TraspasoDetalle,
 ]
+
+# Nombres de modelo ("app_label.ModelName") que si aparecen en una foto
+# guardada ANTES de este cambio (cuando Personalizacion sí se incluía) se
+# ignoran silenciosamente al restaurar, para no pisar el tipo de sistema
+# actual con el que tenía la foto vieja.
+_MODELOS_IGNORADOS_AL_RESTAURAR = {"core.personalizacion"}
 
 
 def _usuarios_de_empleados():
@@ -89,6 +100,9 @@ def restaurar_snapshot(datos):
                 else:
                     modelo.objects.all().delete()
             for objeto in serializers.deserialize("json", datos):
+                etiqueta = f"{objeto.object._meta.app_label}.{objeto.object._meta.model_name}"
+                if etiqueta in _MODELOS_IGNORADOS_AL_RESTAURAR:
+                    continue
                 objeto.save(using=conexion.alias)
         conexion.check_constraints()
 
