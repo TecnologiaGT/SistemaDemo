@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
@@ -8,16 +9,11 @@ from django.views.generic import ListView, DetailView
 from core.models import Tienda, Empleado
 from productos.models import Producto
 from .models import Inventario, Traspaso, TraspasoDetalle
+from .servicios import ajustar_inventario, StockInsuficiente
 
 
 def _empleado_actual(request):
     return Empleado.objects.filter(usuario=request.user).first()
-
-
-def _ajustar_inventario(tienda, producto, delta):
-    inv, _ = Inventario.objects.get_or_create(tienda=tienda, producto=producto)
-    inv.existencia = max(0, inv.existencia + delta)
-    inv.save(update_fields=["existencia"])
 
 
 class InventarioListView(LoginRequiredMixin, View):
@@ -81,17 +77,24 @@ class TraspasoCreateView(LoginRequiredMixin, View):
         destino = get_object_or_404(Tienda, pk=destino_id)
         empleado = Empleado.objects.filter(pk=empleado_id).first() if empleado_id else _empleado_actual(request)
 
-        traspaso = Traspaso.objects.create(
-            tienda_origen=origen, tienda_destino=destino, empleado=empleado, comentario=comentario, estado="V"
-        )
-        for pid, cant in zip(producto_ids, cantidades):
-            producto = Producto.objects.filter(pk=pid).first()
-            if not producto:
-                continue
-            cantidad = int(cant)
-            TraspasoDetalle.objects.create(traspaso=traspaso, producto=producto, cantidad=cantidad)
-            _ajustar_inventario(origen, producto, -cantidad)
-            _ajustar_inventario(destino, producto, cantidad)
+        try:
+            with transaction.atomic():
+                traspaso = Traspaso.objects.create(
+                    tienda_origen=origen, tienda_destino=destino, empleado=empleado, comentario=comentario, estado="V"
+                )
+                for pid, cant in zip(producto_ids, cantidades):
+                    producto = Producto.objects.filter(pk=pid).first()
+                    if not producto:
+                        continue
+                    cantidad = int(cant)
+                    TraspasoDetalle.objects.create(traspaso=traspaso, producto=producto, cantidad=cantidad)
+                    # validar_existencia=True: no se puede traspasar más de
+                    # lo que hay en la tienda de origen en este momento.
+                    ajustar_inventario(origen, producto, -cantidad, validar_existencia=True)
+                    ajustar_inventario(destino, producto, cantidad)
+        except StockInsuficiente as error:
+            messages.error(request, str(error))
+            return redirect("inventario:traspaso_create")
 
         messages.success(request, f"Traspaso #{traspaso.numero} registrado correctamente.")
         return redirect("inventario:traspaso_list")
@@ -103,10 +106,11 @@ class TraspasoAnularView(LoginRequiredMixin, View):
         if traspaso.estado == "A":
             messages.warning(request, "Este traspaso ya estaba anulado.")
             return redirect("inventario:traspaso_list")
-        for d in traspaso.detalle.all():
-            _ajustar_inventario(traspaso.tienda_origen, d.producto, d.cantidad)
-            _ajustar_inventario(traspaso.tienda_destino, d.producto, -d.cantidad)
-        traspaso.estado = "A"
-        traspaso.save(update_fields=["estado"])
+        with transaction.atomic():
+            for d in traspaso.detalle.all():
+                ajustar_inventario(traspaso.tienda_origen, d.producto, d.cantidad)
+                ajustar_inventario(traspaso.tienda_destino, d.producto, -d.cantidad)
+            traspaso.estado = "A"
+            traspaso.save(update_fields=["estado"])
         messages.success(request, f"Traspaso #{traspaso.numero} anulado.")
         return redirect("inventario:traspaso_list")

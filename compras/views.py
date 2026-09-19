@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.views.generic import ListView, DetailView
@@ -9,18 +10,12 @@ from django.views.generic import ListView, DetailView
 from core.models import Tienda, Empleado
 from proveedores.models import Proveedor
 from productos.models import Producto
-from inventario.models import Inventario
+from inventario.servicios import ajustar_inventario
 from .models import Compra, CompraDetalle
 
 
 def _empleado_actual(request):
     return Empleado.objects.filter(usuario=request.user).first()
-
-
-def _ajustar_inventario(tienda, producto, delta):
-    inv, _ = Inventario.objects.get_or_create(tienda=tienda, producto=producto)
-    inv.existencia = max(0, inv.existencia + delta)
-    inv.save(update_fields=["existencia"])
 
 
 class CompraCreateView(LoginRequiredMixin, View):
@@ -54,19 +49,20 @@ class CompraCreateView(LoginRequiredMixin, View):
 
         empleado = Empleado.objects.filter(pk=empleado_id).first() if empleado_id else _empleado_actual(request)
 
-        compra = Compra.objects.create(estado="V", tienda=tienda, proveedor=proveedor, empleado=empleado)
-        for pid, cant, precio in zip(producto_ids, cantidades, precios):
-            producto = Producto.objects.filter(pk=pid).first()
-            if not producto:
-                continue
-            cantidad = int(cant)
-            precio_unitario = Decimal(precio)
-            CompraDetalle.objects.create(
-                compra=compra, producto=producto, cantidad=cantidad, precio_unitario=precio_unitario
-            )
-            _ajustar_inventario(tienda, producto, cantidad)
+        with transaction.atomic():
+            compra = Compra.objects.create(estado="V", tienda=tienda, proveedor=proveedor, empleado=empleado)
+            for pid, cant, precio in zip(producto_ids, cantidades, precios):
+                producto = Producto.objects.filter(pk=pid).first()
+                if not producto:
+                    continue
+                cantidad = int(cant)
+                precio_unitario = Decimal(precio)
+                CompraDetalle.objects.create(
+                    compra=compra, producto=producto, cantidad=cantidad, precio_unitario=precio_unitario
+                )
+                ajustar_inventario(tienda, producto, cantidad)
 
-        compra.recalcular_total()
+            compra.recalcular_total()
         messages.success(request, f"Compra #{compra.numero} registrada correctamente.")
         return redirect("compras:detalle", pk=compra.numero)
 
@@ -104,10 +100,11 @@ class CompraAnularView(LoginRequiredMixin, View):
             messages.warning(request, "Esta compra ya estaba anulada.")
             return redirect("compras:list")
         comentario = request.POST.get("comentario", "")
-        for d in compra.detalle.all():
-            _ajustar_inventario(compra.tienda, d.producto, -d.cantidad)  # se resta lo que había sumado
-        compra.estado = "A"
-        compra.comentario_anulacion = comentario
-        compra.save(update_fields=["estado", "comentario_anulacion"])
+        with transaction.atomic():
+            for d in compra.detalle.all():
+                ajustar_inventario(compra.tienda, d.producto, -d.cantidad)  # se resta lo que había sumado
+            compra.estado = "A"
+            compra.comentario_anulacion = comentario
+            compra.save(update_fields=["estado", "comentario_anulacion"])
         messages.success(request, f"Compra #{compra.numero} anulada.")
         return redirect("compras:list")
