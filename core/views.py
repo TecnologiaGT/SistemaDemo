@@ -174,6 +174,13 @@ class ReiniciarSistemaView(LoginRequiredMixin, View):
                 messages.error(request, f"No se pudo restaurar: {error}")
                 return redirect("core:home")
 
+            # Los nombres de los productos guardados en la foto son los que
+            # tenía el tipo de sistema activo cuando se guardó (por ejemplo
+            # "Librería"). Después de restaurar, siempre se vuelven a
+            # renombrar según el tipo de sistema ACTUAL, para que no
+            # aparezcan mezclados con el tipo que tengas elegido ahora.
+            renombrar_productos_segun_tipo(Personalizacion.obtener().tipo_sistema)
+
             nueva_password = snapshot_demo.generar_password_aleatoria()
             admin_user = User.objects.filter(username="admin").first()
             if admin_user:
