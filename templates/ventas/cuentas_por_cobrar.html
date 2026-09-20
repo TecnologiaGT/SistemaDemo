@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Cuentas por Cobrar{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Cuentas por Cobrar</h1><div class="subt">Ventas al crédito con saldo pendiente</div></div>
+</div>
+
+<div class="panel">
+  <div class="etiqueta" style="color:var(--texto-tenue);font-size:.85rem;">Total pendiente de cobro</div>
+  <div class="total-grande">Q {{ total_pendiente }}</div>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>No.</th><th>Fecha</th><th>Tienda</th><th>Cliente</th><th>Total</th><th>Abonado</th><th>Saldo</th><th></th></tr></thead>
+<tbody>
+{% for v in filas %}
+<tr>
+  <td>{{ v.numero }}</td>
+  <td>{{ v.fecha|date:"d/m/Y" }}</td>
+  <td>{{ v.tienda }}</td>
+  <td>{{ v.cliente|default:"Consumidor Final" }}</td>
+  <td>Q {{ v.total }}</td>
+  <td>Q {{ v.total_abonado }}</td>
+  <td><strong>Q {{ v.saldo_pendiente }}</strong></td>
+  <td><a href="{% url 'ventas:detalle' v.numero %}" class="btn btn-sm">Ver / Abonar</a></td>
+</tr>
+{% empty %}
+<tr><td colspan="8">No hay cuentas por cobrar pendientes.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

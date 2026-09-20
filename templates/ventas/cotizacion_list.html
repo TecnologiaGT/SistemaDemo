@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}Cotizaciones{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Cotizaciones</h1><div class="subt">Presupuestos para clientes, convertibles a venta</div></div>
+  <a href="{% url 'ventas:cotizacion_create' %}" class="btn btn-primario">+ Nueva cotización</a>
+</div>
+
+<form method="get" class="barra-acciones">
+  <select name="tienda">
+    <option value="">Todas las tiendas</option>
+    {% for t in tiendas %}<option value="{{ t.id }}" {% if request.GET.tienda == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
+  </select>
+  <button class="btn">Filtrar</button>
+</form>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>No.</th><th>Fecha</th><th>Tienda</th><th>Cliente</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for c in cotizaciones %}
+<tr>
+  <td>{{ c.numero }}</td>
+  <td>{{ c.fecha|date:"d/m/Y H:i" }}</td>
+  <td>{{ c.tienda }}</td>
+  <td>{{ c.cliente|default:"Consumidor Final" }}</td>
+  <td>Q {{ c.total }}</td>
+  <td>
+    {% if c.estado == 'A' %}<span class="badge badge-ok">Activa</span>
+    {% elif c.estado == 'C' %}<span class="badge badge-ok">Convertida</span>
+    {% else %}<span class="badge badge-off">Cancelada</span>{% endif %}
+  </td>
+  <td><a href="{% url 'ventas:cotizacion_detalle' c.numero %}" class="btn btn-sm">Ver</a></td>
+</tr>
+{% empty %}
+<tr><td colspan="7">No hay cotizaciones registradas todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

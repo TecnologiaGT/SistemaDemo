@@ -29,6 +29,7 @@
   <div>{{ venta.fecha|date:"d/m/Y H:i" }}</div>
   <div>Cliente: {{ venta.cliente|default:"Consumidor Final" }}</div>
   <div>Atendió: {{ venta.empleado|default:"—" }}</div>
+  <div>Forma de pago: {{ venta.get_forma_pago_display }}</div>
   <div class="ticket-linea"></div>
   {% for d in venta.detalle.all %}
   <div class="ticket-item">
@@ -42,6 +43,9 @@
   <div class="ticket-total-fila"><span>Descuento</span><span>-Q {{ venta.descuento }}</span></div>
   {% endif %}
   <div class="ticket-total-fila ticket-total-grande"><span>TOTAL</span><span>Q {{ venta.total }}</span></div>
+  {% if venta.forma_pago == 'credito' and venta.saldo_pendiente > 0 %}
+  <div class="ticket-total-fila"><span>Saldo pendiente</span><span>Q {{ venta.saldo_pendiente }}</span></div>
+  {% endif %}
   <div class="ticket-linea"></div>
   <div class="ticket-centro ticket-pie">¡Gracias por su compra!</div>
 </div>

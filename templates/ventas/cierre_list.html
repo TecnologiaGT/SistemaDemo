@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Cierres de Caja{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Cierres de Caja</h1><div class="subt">Historial de arqueos registrados</div></div>
+  <a href="{% url 'ventas:cierre_create' %}" class="btn btn-primario">+ Nuevo cierre</a>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>No.</th><th>Tienda</th><th>Desde</th><th>Hasta</th><th>Ventas</th><th>Efectivo esperado</th><th>Efectivo contado</th><th>Diferencia</th></tr></thead>
+<tbody>
+{% for c in cierres %}
+<tr>
+  <td>{{ c.numero }}</td>
+  <td>{{ c.tienda }}</td>
+  <td>{{ c.desde|date:"d/m/Y H:i" }}</td>
+  <td>{{ c.hasta|date:"d/m/Y H:i" }}</td>
+  <td>{{ c.cantidad_ventas }}</td>
+  <td>Q {{ c.total_efectivo }}</td>
+  <td>Q {{ c.efectivo_contado }}</td>
+  <td>
+    {% if c.diferencia == 0 %}<span class="badge badge-ok">Exacto</span>
+    {% elif c.diferencia > 0 %}<span class="badge badge-ok">+Q {{ c.diferencia }} sobra</span>
+    {% else %}<span class="badge badge-off">Q {{ c.diferencia }} falta</span>{% endif %}
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="8">No hay cierres de caja registrados todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

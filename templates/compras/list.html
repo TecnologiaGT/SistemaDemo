@@ -17,7 +17,7 @@
 
 <div class="tabla-wrap">
 <table class="tabla">
-<thead><tr><th>No.</th><th>Fecha</th><th>Tienda</th><th>Usuario</th><th>Proveedor</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+<thead><tr><th>No.</th><th>Fecha</th><th>Tienda</th><th>Usuario</th><th>Proveedor</th><th>Total</th><th>Forma de pago</th><th>Estado</th><th></th></tr></thead>
 <tbody>
 {% for c in compras %}
 <tr>
@@ -27,6 +27,7 @@
   <td>{{ c.empleado|default:"—" }}</td>
   <td>{{ c.proveedor }}</td>
   <td>Q {{ c.total }}</td>
+  <td>{{ c.get_forma_pago_display }}{% if c.forma_pago == 'credito' and c.saldo_pendiente > 0 %} <span class="badge badge-off">Q {{ c.saldo_pendiente }} pendiente</span>{% endif %}</td>
   <td>{% if c.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulada</span>{% endif %}</td>
   <td style="display:flex;gap:8px;">
     <a href="{% url 'compras:detalle' c.numero %}" class="btn btn-sm">Ver</a>
@@ -39,7 +40,7 @@
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="8">No hay compras registradas todavía.</td></tr>
+<tr><td colspan="9">No hay compras registradas todavía.</td></tr>
 {% endfor %}
 </tbody>
 </table>

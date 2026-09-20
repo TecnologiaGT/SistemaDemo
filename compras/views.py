@@ -12,7 +12,7 @@ from core.exportar_excel import exportar_filas_excel
 from proveedores.models import Proveedor
 from productos.models import Producto
 from inventario.servicios import ajustar_inventario
-from .models import Compra, CompraDetalle
+from .models import Compra, CompraDetalle, AbonoCompra
 
 
 def _empleado_actual(request):
@@ -38,6 +38,9 @@ class CompraCreateView(LoginRequiredMixin, View):
         producto_ids = request.POST.getlist("producto_id[]")
         cantidades = request.POST.getlist("cantidad[]")
         precios = request.POST.getlist("precio_unitario[]")
+        forma_pago = request.POST.get("forma_pago") or "efectivo"
+        if forma_pago not in dict(Compra.FORMAS_PAGO):
+            forma_pago = "efectivo"
 
         tienda = get_object_or_404(Tienda, pk=tienda_id) if tienda_id else None
         proveedor = get_object_or_404(Proveedor, pk=proveedor_id) if proveedor_id else None
@@ -51,7 +54,9 @@ class CompraCreateView(LoginRequiredMixin, View):
         empleado = Empleado.objects.filter(pk=empleado_id).first() if empleado_id else _empleado_actual(request)
 
         with transaction.atomic():
-            compra = Compra.objects.create(estado="V", tienda=tienda, proveedor=proveedor, empleado=empleado)
+            compra = Compra.objects.create(
+                estado="V", tienda=tienda, proveedor=proveedor, empleado=empleado, forma_pago=forma_pago
+            )
             for pid, cant, precio in zip(producto_ids, cantidades, precios):
                 producto = Producto.objects.filter(pk=pid).first()
                 if not producto:
@@ -93,7 +98,7 @@ class CompraExportarView(LoginRequiredMixin, View):
         tienda_id = request.GET.get("tienda")
         if tienda_id:
             qs = qs.filter(tienda_id=tienda_id)
-        encabezados = ["No.", "Fecha", "Tienda", "Usuario", "Proveedor", "Total", "Estado"]
+        encabezados = ["No.", "Fecha", "Tienda", "Usuario", "Proveedor", "Total", "Forma de pago", "Estado"]
         filas = (
             [
                 c.numero,
@@ -102,6 +107,7 @@ class CompraExportarView(LoginRequiredMixin, View):
                 str(c.empleado) if c.empleado else "",
                 str(c.proveedor),
                 float(c.total),
+                c.get_forma_pago_display(),
                 c.get_estado_display(),
             ]
             for c in qs
@@ -114,6 +120,43 @@ class CompraDetailView(LoginRequiredMixin, DetailView):
     template_name = "compras/detalle.html"
     context_object_name = "compra"
     pk_url_kwarg = "pk"
+
+
+class CuentasPorPagarListView(LoginRequiredMixin, View):
+    template_name = "compras/cuentas_por_pagar.html"
+
+    def get(self, request):
+        compras = (
+            Compra.objects.filter(estado="V", forma_pago="credito")
+            .select_related("tienda", "proveedor")
+            .prefetch_related("abonos")
+            .order_by("-fecha")
+        )
+        filas = [c for c in compras if c.saldo_pendiente > 0]
+        total_pendiente = sum((c.saldo_pendiente for c in filas), Decimal("0"))
+        return render(request, self.template_name, {
+            "filas": filas, "total_pendiente": total_pendiente,
+        })
+
+
+class AbonoCompraCreateView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        compra = get_object_or_404(Compra, pk=pk)
+        try:
+            monto = Decimal(request.POST.get("monto") or "0")
+        except Exception:
+            monto = Decimal("0")
+        saldo = compra.saldo_pendiente
+        if compra.forma_pago != "credito":
+            messages.error(request, "Esta compra no es al crédito.")
+        elif monto <= 0:
+            messages.error(request, "El monto del abono debe ser mayor a cero.")
+        elif monto > saldo:
+            messages.error(request, f"El abono (Q {monto}) no puede ser mayor al saldo pendiente (Q {saldo}).")
+        else:
+            AbonoCompra.objects.create(compra=compra, monto=monto, comentario=request.POST.get("comentario", ""))
+            messages.success(request, f"Abono de Q {monto} registrado en la Compra #{compra.numero}.")
+        return redirect("compras:detalle", pk=compra.numero)
 
 
 class CompraAnularView(LoginRequiredMixin, View):

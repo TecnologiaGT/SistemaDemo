@@ -15,6 +15,7 @@
   <div class="form-grid">
     <div><label>Cliente</label>{{ venta.cliente|default:"Consumidor Final" }}</div>
     <div><label>Vendedor</label>{{ venta.empleado|default:"—" }}</div>
+    <div><label>Forma de pago</label>{{ venta.get_forma_pago_display }}</div>
     <div><label>Estado</label>{% if venta.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulada</span>{% endif %}</div>
     {% if venta.venta_original %}<div><label>Devolución de</label>Factura #{{ venta.venta_original.numero }}</div>{% endif %}
   </div>
@@ -38,4 +39,44 @@
   {% endif %}
   <span class="total-grande">Total: Q {{ venta.total }}</span>
 </div>
+
+{% if venta.forma_pago == 'credito' and venta.tipo == 'V' and venta.estado == 'V' %}
+<div class="panel no-imprimir">
+  <h1 style="font-size:1.1rem;margin-top:0;">Cuenta por cobrar</h1>
+  <div class="form-grid">
+    <div><label>Total abonado</label>Q {{ venta.total_abonado }}</div>
+    <div><label>Saldo pendiente</label><strong>Q {{ venta.saldo_pendiente }}</strong></div>
+  </div>
+
+  {% if venta.abonos.all %}
+  <div class="tabla-wrap" style="margin-top:12px;">
+    <table class="tabla">
+      <thead><tr><th>Fecha</th><th>Monto</th><th>Comentario</th></tr></thead>
+      <tbody>
+      {% for a in venta.abonos.all %}
+        <tr><td>{{ a.fecha|date:"d/m/Y H:i" }}</td><td>Q {{ a.monto }}</td><td>{{ a.comentario|default:"—" }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if venta.saldo_pendiente > 0 %}
+  <form method="post" action="{% url 'ventas:abono' venta.numero %}" class="form-grid" style="margin-top:14px;">
+    {% csrf_token %}
+    <div class="campo">
+      <label>Monto del abono (Q)</label>
+      <input type="number" name="monto" min="0.01" step="0.01" max="{{ venta.saldo_pendiente }}" required>
+    </div>
+    <div class="campo">
+      <label>Comentario (opcional)</label>
+      <input type="text" name="comentario" maxlength="255">
+    </div>
+    <div class="campo" style="align-self:end;">
+      <button type="submit" class="btn btn-primario">Registrar abono</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

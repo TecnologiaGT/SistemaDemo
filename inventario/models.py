@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from core.models import Tienda, Empleado
 from productos.models import Producto
 
@@ -57,3 +58,37 @@ class TraspasoDetalle(models.Model):
 
     def __str__(self):
         return f"{self.producto.nombre} x{self.cantidad}"
+
+
+class Lote(models.Model):
+    """Registro informativo de un lote de producto con fecha de vencimiento,
+    por tienda. No reemplaza la existencia agregada de Inventario ni se
+    descuenta automáticamente en las ventas (el sistema no hace FIFO/FEFO
+    por lote); es para llevar control y alertar antes de que algo venza."""
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name="lotes")
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="lotes")
+    numero_lote = models.CharField(max_length=50, blank=True)
+    cantidad = models.PositiveIntegerField(default=0)
+    fecha_vencimiento = models.DateField()
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Lote"
+        verbose_name_plural = "Lotes"
+        ordering = ["fecha_vencimiento"]
+
+    def __str__(self):
+        return f"{self.producto.nombre} (vence {self.fecha_vencimiento}) @ {self.tienda.nombre}"
+
+    @property
+    def dias_para_vencer(self):
+        return (self.fecha_vencimiento - timezone.localdate()).days
+
+    @property
+    def estado_vencimiento(self):
+        dias = self.dias_para_vencer
+        if dias < 0:
+            return "vencido"
+        if dias <= 30:
+            return "proximo"
+        return "normal"

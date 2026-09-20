@@ -9,7 +9,7 @@ from django.views.generic import ListView, DetailView
 from core.models import Tienda, Empleado
 from core.exportar_excel import exportar_filas_excel
 from productos.models import Producto
-from .models import Inventario, Traspaso, TraspasoDetalle
+from .models import Inventario, Traspaso, TraspasoDetalle, Lote
 from .servicios import ajustar_inventario, StockInsuficiente
 
 
@@ -63,6 +63,57 @@ class InventarioExportarView(LoginRequiredMixin, View):
             encabezados = ["Producto", "Código", "Existencia total"]
             filas = ([f["producto__nombre"], f["producto__codigo"] or "", f["existencia_total"]] for f in qs)
         return exportar_filas_excel("inventario.xlsx", "Inventario", encabezados, filas)
+
+
+class LoteListView(LoginRequiredMixin, View):
+    template_name = "inventario/lote_list.html"
+
+    def get(self, request):
+        tienda_id = request.GET.get("tienda")
+        lotes = Lote.objects.select_related("producto", "tienda").order_by("fecha_vencimiento")
+        if tienda_id:
+            lotes = lotes.filter(tienda_id=tienda_id)
+        return render(request, self.template_name, {
+            "lotes": lotes, "tiendas": Tienda.objects.all(), "tienda_id": tienda_id,
+        })
+
+
+class LoteCreateView(LoginRequiredMixin, View):
+    template_name = "inventario/lote_form.html"
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            "tiendas": Tienda.objects.filter(activa=True),
+            "productos": Producto.objects.filter(activo=True),
+        })
+
+    def post(self, request):
+        tienda_id = request.POST.get("tienda")
+        producto_id = request.POST.get("producto")
+        numero_lote = request.POST.get("numero_lote", "")
+        cantidad = request.POST.get("cantidad") or 0
+        fecha_vencimiento = request.POST.get("fecha_vencimiento")
+
+        tienda = Tienda.objects.filter(pk=tienda_id).first()
+        producto = Producto.objects.filter(pk=producto_id).first()
+        if not tienda or not producto or not fecha_vencimiento:
+            messages.error(request, "Selecciona tienda, producto y fecha de vencimiento.")
+            return redirect("inventario:lote_create")
+
+        Lote.objects.create(
+            tienda=tienda, producto=producto, numero_lote=numero_lote,
+            cantidad=int(cantidad), fecha_vencimiento=fecha_vencimiento,
+        )
+        messages.success(request, "Lote registrado correctamente.")
+        return redirect("inventario:lote_list")
+
+
+class LoteEliminarView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        lote = get_object_or_404(Lote, pk=pk)
+        lote.delete()
+        messages.success(request, "Lote eliminado (por ejemplo, porque ya se agotó o venció y se descartó).")
+        return redirect("inventario:lote_list")
 
 
 class TraspasoListView(LoginRequiredMixin, ListView):
