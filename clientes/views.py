@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
 
+from core.exportar_excel import exportar_filas_excel
 from .models import Cliente
 from .forms import ClienteForm, DireccionFormSet, TelefonoFormSet
 
@@ -22,6 +23,26 @@ class ClienteListView(LoginRequiredMixin, ListView):
         if q:
             qs = qs.filter(nombre__icontains=q)
         return qs
+
+
+class ClienteExportarView(LoginRequiredMixin, View):
+    def get(self, request):
+        qs = Cliente.objects.all().order_by("nombre")
+        q = request.GET.get("q")
+        if q:
+            qs = qs.filter(nombre__icontains=q)
+        encabezados = ["Nombre", "NIT/Documento", "Email", "Teléfonos", "Estado"]
+        filas = (
+            [
+                c.nombre,
+                c.nit_documento,
+                c.email,
+                ", ".join(t.telefono for t in c.telefonos.all()),
+                "Activo" if c.activo else "Inactivo",
+            ]
+            for c in qs
+        )
+        return exportar_filas_excel("clientes.xlsx", "Clientes", encabezados, filas)
 
 
 class ClienteFormView(LoginRequiredMixin, View):

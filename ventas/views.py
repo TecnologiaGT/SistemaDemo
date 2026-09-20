@@ -10,6 +10,7 @@ from django.views.generic import ListView, DetailView
 
 from core.models import Tienda, Empleado
 from core.permissions import usuario_es_admin
+from core.exportar_excel import exportar_filas_excel
 from clientes.models import Cliente
 from productos.models import Producto
 from inventario.servicios import ajustar_inventario, StockInsuficiente
@@ -50,6 +51,12 @@ class CajaView(LoginRequiredMixin, View):
         producto_ids = request.POST.getlist("producto_id[]")
         cantidades = request.POST.getlist("cantidad[]")
         precios = request.POST.getlist("precio_unitario[]")
+        try:
+            descuento = Decimal(request.POST.get("descuento") or "0")
+        except Exception:
+            descuento = Decimal("0")
+        if descuento < 0:
+            descuento = Decimal("0")
 
         if es_admin:
             # Un administrador puede vender a nombre de otra tienda/vendedor.
@@ -80,7 +87,9 @@ class CajaView(LoginRequiredMixin, View):
 
         try:
             with transaction.atomic():
-                venta = Venta.objects.create(tipo="V", estado="V", tienda=tienda, empleado=empleado, cliente=cliente)
+                venta = Venta.objects.create(
+                    tipo="V", estado="V", tienda=tienda, empleado=empleado, cliente=cliente, descuento=descuento
+                )
                 for pid, cant, precio in zip(producto_ids, cantidades, precios):
                     producto = Producto.objects.filter(pk=pid).first()
                     if not producto:
@@ -122,9 +131,44 @@ class VentaListView(LoginRequiredMixin, ListView):
         return ctx
 
 
+class VentaExportarView(LoginRequiredMixin, View):
+    def get(self, request):
+        qs = Venta.objects.select_related("tienda", "cliente", "empleado").order_by("-fecha")
+        tienda_id = request.GET.get("tienda")
+        if tienda_id:
+            qs = qs.filter(tienda_id=tienda_id)
+        encabezados = [
+            "No.", "Tipo", "Fecha", "Tienda", "Usuario", "Cliente",
+            "Subtotal", "Descuento", "Total", "Estado",
+        ]
+        filas = (
+            [
+                v.numero,
+                v.get_tipo_display(),
+                v.fecha.strftime("%d/%m/%Y %H:%M"),
+                str(v.tienda),
+                str(v.empleado) if v.empleado else "",
+                str(v.cliente) if v.cliente else "Consumidor Final",
+                float(v.subtotal),
+                float(v.descuento),
+                float(v.total),
+                v.get_estado_display(),
+            ]
+            for v in qs
+        )
+        return exportar_filas_excel("ventas.xlsx", "Ventas", encabezados, filas)
+
+
 class VentaDetailView(LoginRequiredMixin, DetailView):
     model = Venta
     template_name = "ventas/detalle.html"
+    context_object_name = "venta"
+    pk_url_kwarg = "pk"
+
+
+class VentaTicketView(LoginRequiredMixin, DetailView):
+    model = Venta
+    template_name = "ventas/ticket.html"
     context_object_name = "venta"
     pk_url_kwarg = "pk"
 

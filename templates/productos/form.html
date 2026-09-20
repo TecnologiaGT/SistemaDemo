@@ -10,6 +10,10 @@
     <div class="campo"><label>Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
     <div class="campo"><label>Precio de compra</label>{{ form.precio_compra }}{{ form.precio_compra.errors }}</div>
     <div class="campo"><label>Precio de venta</label>{{ form.precio_venta }}{{ form.precio_venta.errors }}</div>
+    <div class="campo">
+      <label>Stock mínimo</label>{{ form.stock_minimo }}{{ form.stock_minimo.errors }}
+      <div class="subt" style="margin-top:4px;">En 0, no se muestran alertas de stock bajo para este producto.</div>
+    </div>
     <div class="campo" style="grid-column:1/-1;"><label>Descripción</label>{{ form.descripcion }}</div>
     <div class="campo">
       <label>Foto</label>{{ form.foto_principal }}

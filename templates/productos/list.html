@@ -9,11 +9,12 @@
 <form method="get" class="barra-acciones">
   <input type="text" name="q" placeholder="Buscar por nombre o código..." value="{{ request.GET.q }}" style="max-width:280px;">
   <button class="btn">Buscar</button>
+  <a href="{% url 'productos:exportar' %}?q={{ request.GET.q|default:'' }}" class="btn">⬇️ Exportar a Excel</a>
 </form>
 
 <div class="tabla-wrap">
 <table class="tabla">
-<thead><tr><th></th><th>Código</th><th>Nombre</th><th>Precio compra</th><th>Precio venta</th><th>Estado</th><th></th></tr></thead>
+<thead><tr><th></th><th>Código</th><th>Nombre</th><th>Precio compra</th><th>Precio venta</th><th>Stock mínimo</th><th>Estado</th><th></th></tr></thead>
 <tbody>
 {% for p in productos %}
 <tr>
@@ -22,6 +23,7 @@
   <td>{{ p.nombre }}</td>
   <td>Q {{ p.precio_compra }}</td>
   <td>Q {{ p.precio_venta }}</td>
+  <td>{% if p.stock_minimo %}{{ p.stock_minimo }}{% else %}<span class="subt">sin alerta</span>{% endif %}</td>
   <td>{% if p.activo %}<span class="badge badge-ok">Activo</span>{% else %}<span class="badge badge-off">Inactivo</span>{% endif %}</td>
   <td style="display:flex;gap:8px;">
     <a href="{% url 'productos:update' p.pk %}" class="btn btn-sm">Editar</a>
@@ -32,7 +34,7 @@
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="7">No hay productos registrados todavía.</td></tr>
+<tr><td colspan="8">No hay productos registrados todavía.</td></tr>
 {% endfor %}
 </tbody>
 </table>

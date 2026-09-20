@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView
 
+from core.exportar_excel import exportar_filas_excel
 from .models import Producto
 from .forms import ProductoForm
 
@@ -46,6 +47,27 @@ class ProductoUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, "Producto actualizado correctamente.")
         return super().form_valid(form)
+
+
+class ProductoExportarView(LoginRequiredMixin, View):
+    def get(self, request):
+        qs = Producto.objects.all().order_by("nombre")
+        q = request.GET.get("q")
+        if q:
+            qs = qs.filter(nombre__icontains=q)
+        encabezados = ["Código", "Nombre", "Precio compra", "Precio venta", "Stock mínimo", "Estado"]
+        filas = (
+            [
+                p.codigo or "",
+                p.nombre,
+                float(p.precio_compra),
+                float(p.precio_venta),
+                p.stock_minimo,
+                "Activo" if p.activo else "Inactivo",
+            ]
+            for p in qs
+        )
+        return exportar_filas_excel("productos.xlsx", "Productos", encabezados, filas)
 
 
 class ProductoToggleView(LoginRequiredMixin, View):

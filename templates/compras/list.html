@@ -12,6 +12,7 @@
     {% for t in tiendas %}<option value="{{ t.id }}" {% if request.GET.tienda == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
   </select>
   <button class="btn">Filtrar</button>
+  <a href="{% url 'compras:exportar' %}?tienda={{ request.GET.tienda }}" class="btn">⬇️ Exportar a Excel</a>
 </form>
 
 <div class="tabla-wrap">

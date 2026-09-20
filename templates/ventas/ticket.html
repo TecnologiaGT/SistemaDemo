@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block titulo %}Ticket #{{ venta.numero }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Solo afecta esta página: al imprimir el ticket, usa un tamaño de
+     página angosto (formato de impresora térmica de 80mm) en vez del
+     tamaño carta que usa el resto del sistema. */
+  @page { size: 80mm auto; margin: 4mm; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Ticket #{{ venta.numero }}</h1><div class="subt">Formato angosto para impresora térmica (80mm)</div></div>
+  <div class="barra-acciones no-imprimir">
+    <button onclick="window.print()" class="btn btn-primario">🖨️ Imprimir ticket</button>
+    <a href="{% url 'ventas:detalle' venta.numero %}" class="btn">Ver factura completa</a>
+  </div>
+</div>
+
+<div class="ticket-80mm">
+  <div class="ticket-centro">
+    <div class="ticket-titulo">{{ personalizacion.nombre_sistema }}</div>
+    <div>{{ venta.tienda }}</div>
+  </div>
+  <div class="ticket-linea"></div>
+  <div>{% if venta.tipo == 'V' %}Venta{% else %}Devolución{% endif %} #{{ venta.numero }}</div>
+  <div>{{ venta.fecha|date:"d/m/Y H:i" }}</div>
+  <div>Cliente: {{ venta.cliente|default:"Consumidor Final" }}</div>
+  <div>Atendió: {{ venta.empleado|default:"—" }}</div>
+  <div class="ticket-linea"></div>
+  {% for d in venta.detalle.all %}
+  <div class="ticket-item">
+    <div>{{ d.producto.nombre }}</div>
+    <div class="ticket-item-detalle"><span>{{ d.cantidad }} x Q {{ d.precio_unitario }}</span><span>Q {{ d.subtotal }}</span></div>
+  </div>
+  {% endfor %}
+  <div class="ticket-linea"></div>
+  {% if venta.descuento %}
+  <div class="ticket-total-fila"><span>Subtotal</span><span>Q {{ venta.subtotal }}</span></div>
+  <div class="ticket-total-fila"><span>Descuento</span><span>-Q {{ venta.descuento }}</span></div>
+  {% endif %}
+  <div class="ticket-total-fila ticket-total-grande"><span>TOTAL</span><span>Q {{ venta.total }}</span></div>
+  <div class="ticket-linea"></div>
+  <div class="ticket-centro ticket-pie">¡Gracias por su compra!</div>
+</div>
+{% endblock %}

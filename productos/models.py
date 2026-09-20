@@ -7,6 +7,10 @@ class Producto(models.Model):
     descripcion = models.TextField(blank=True)
     precio_compra = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    stock_minimo = models.PositiveIntegerField(
+        default=0,
+        help_text="Existencia mínima deseada. En 0, no se muestran alertas de stock bajo para este producto.",
+    )
     foto_principal = models.ImageField(upload_to="productos/", blank=True, null=True)
     activo = models.BooleanField(default=True)
     creado = models.DateTimeField(auto_now_add=True)

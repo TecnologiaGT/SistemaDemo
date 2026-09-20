@@ -77,7 +77,13 @@
 
     <div>
       <div class="panel">
-        <div class="etiqueta" style="color:var(--texto-tenue);font-size:.85rem;">Total a cobrar</div>
+        <div class="campo">
+          <label>Descuento (Q)</label>
+          <input type="number" name="descuento" id="in-descuento" min="0" step="0.01" value="0">
+        </div>
+        <div class="etiqueta" style="color:var(--texto-tenue);font-size:.85rem;margin-top:10px;">Subtotal</div>
+        <div id="subtotal-venta" style="font-size:1.05rem;font-weight:600;">Q 0.00</div>
+        <div class="etiqueta" style="color:var(--texto-tenue);font-size:.85rem;margin-top:10px;">Total a cobrar</div>
         <div class="total-grande" id="total-venta">Q 0.00</div>
         <button type="submit" class="btn btn-primario" style="width:100%;justify-content:center;margin-top:16px;" id="btn-guardar" disabled>Guardar e imprimir factura</button>
         <a href="{% url 'core:home' %}" class="btn" style="width:100%;justify-content:center;margin-top:8px;">Cancelar</a>
@@ -92,7 +98,9 @@
 (function () {
   const cuerpo = document.getElementById("cuerpo-carrito");
   const filaVacio = document.getElementById("fila-vacio");
+  const subtotalEl = document.getElementById("subtotal-venta");
   const totalEl = document.getElementById("total-venta");
+  const inDescuento = document.getElementById("in-descuento");
   const btnGuardar = document.getElementById("btn-guardar");
   const form = document.getElementById("form-venta");
 
@@ -149,19 +157,23 @@
   });
 
   function recalcularTotal() {
-    let total = 0;
+    let subtotal = 0;
     cuerpo.querySelectorAll(".fila-carrito").forEach((fila) => {
       const cant = parseFloat(fila.querySelector('.in-cant').value) || 0;
       const precio = parseFloat(fila.querySelector('.in-precio').value) || 0;
       const sub = cant * precio;
       fila.querySelector(".celda-subtotal").textContent = formatoQ(sub);
-      total += sub;
+      subtotal += sub;
     });
+    const descuento = Math.max(0, parseFloat(inDescuento.value) || 0);
+    const total = Math.max(0, subtotal - descuento);
+    subtotalEl.textContent = formatoQ(subtotal);
     totalEl.textContent = formatoQ(total);
     const hayFilas = cuerpo.querySelectorAll(".fila-carrito").length > 0;
     btnGuardar.disabled = !hayFilas;
     filaVacio.style.display = hayFilas ? "none" : "";
   }
+  inDescuento.addEventListener("input", recalcularTotal);
 
   document.getElementById("btn-agregar-linea").addEventListener("click", function () {
     if (!productoSeleccionado) { alert("Busca y escoge un producto (clic o Shift+F12)."); return; }

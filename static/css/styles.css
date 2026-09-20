@@ -303,6 +303,26 @@ input.campo-consulta::placeholder { color: var(--texto-tenue); opacity: 0.9; }
 
 .confirm-check { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--texto-tenue); }
 
+/* Ticket térmico 80mm (ventas/ticket.html). El tamaño de página al
+   imprimir se define en la propia plantilla (extra_css), para no afectar
+   la impresión del resto del sistema, que usa tamaño carta. */
+.ticket-80mm {
+  max-width: 302px; margin: 0 auto; padding: 16px;
+  font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.5;
+  color: #000; background: #fff; border: 1px dashed var(--borde, #ccc); border-radius: 4px;
+}
+.ticket-centro { text-align: center; }
+.ticket-titulo { font-weight: 700; font-size: 14px; }
+.ticket-linea { border-top: 1px dashed #999; margin: 8px 0; }
+.ticket-item { margin-bottom: 4px; }
+.ticket-item-detalle { display: flex; justify-content: space-between; }
+.ticket-total-fila { display: flex; justify-content: space-between; }
+.ticket-total-grande { font-weight: 700; font-size: 14px; margin-top: 4px; }
+.ticket-pie { margin-top: 10px; font-size: 11px; }
+@media print {
+  .ticket-80mm { border: none; padding: 0; }
+}
+
 /* Gráfica de pastel de los reportes (reportes/_pastel.html). */
 .pastel-wrap { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
 .pastel-svg { flex: 0 0 auto; }

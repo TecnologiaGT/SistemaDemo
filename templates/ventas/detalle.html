@@ -6,6 +6,7 @@
   <div class="subt">{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.tienda }}</div></div>
   <div class="barra-acciones">
     <button onclick="window.print()" class="btn btn-primario">🖨️ Imprimir</button>
+    <a href="{% url 'ventas:ticket' venta.numero %}" class="btn">🧾 Ticket 80mm</a>
     <a href="{% url 'ventas:list' %}" class="btn">Volver</a>
   </div>
 </div>
@@ -31,6 +32,10 @@
 </div>
 
 <div class="panel" style="text-align:right;">
+  {% if venta.descuento %}
+  <div class="subt">Subtotal: Q {{ venta.subtotal }}</div>
+  <div class="subt">Descuento: -Q {{ venta.descuento }}</div>
+  {% endif %}
   <span class="total-grande">Total: Q {{ venta.total }}</span>
 </div>
 {% endblock %}

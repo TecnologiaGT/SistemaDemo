@@ -8,6 +8,7 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 
 from core.models import Tienda, Empleado
+from core.exportar_excel import exportar_filas_excel
 from proveedores.models import Proveedor
 from productos.models import Producto
 from inventario.servicios import ajustar_inventario
@@ -84,6 +85,28 @@ class CompraListView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["tiendas"] = Tienda.objects.all()
         return ctx
+
+
+class CompraExportarView(LoginRequiredMixin, View):
+    def get(self, request):
+        qs = Compra.objects.select_related("tienda", "proveedor", "empleado").order_by("-fecha")
+        tienda_id = request.GET.get("tienda")
+        if tienda_id:
+            qs = qs.filter(tienda_id=tienda_id)
+        encabezados = ["No.", "Fecha", "Tienda", "Usuario", "Proveedor", "Total", "Estado"]
+        filas = (
+            [
+                c.numero,
+                c.fecha.strftime("%d/%m/%Y %H:%M"),
+                str(c.tienda),
+                str(c.empleado) if c.empleado else "",
+                str(c.proveedor),
+                float(c.total),
+                c.get_estado_display(),
+            ]
+            for c in qs
+        )
+        return exportar_filas_excel("compras.xlsx", "Compras", encabezados, filas)
 
 
 class CompraDetailView(LoginRequiredMixin, DetailView):

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from core.models import Tienda, Empleado
 from clientes.models import Cliente
@@ -30,6 +32,10 @@ class Venta(models.Model):
         help_text="Si es una devolución, referencia a la venta original.",
     )
     fecha = models.DateTimeField(auto_now_add=True)
+    descuento = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Monto en quetzales que se resta del subtotal antes del total.",
+    )
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     comentario_anulacion = models.CharField(max_length=255, blank=True)
 
@@ -41,8 +47,14 @@ class Venta(models.Model):
     def __str__(self):
         return f"Factura #{self.numero}"
 
+    @property
+    def subtotal(self):
+        return sum((d.subtotal for d in self.detalle.all()), Decimal("0"))
+
     def recalcular_total(self):
-        total = sum(d.subtotal for d in self.detalle.all())
+        total = self.subtotal - self.descuento
+        if total < 0:
+            total = Decimal("0")
         self.total = total
         self.save(update_fields=["total"])
 

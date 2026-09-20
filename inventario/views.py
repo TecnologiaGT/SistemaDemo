@@ -7,6 +7,7 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 
 from core.models import Tienda, Empleado
+from core.exportar_excel import exportar_filas_excel
 from productos.models import Producto
 from .models import Inventario, Traspaso, TraspasoDetalle
 from .servicios import ajustar_inventario, StockInsuficiente
@@ -27,7 +28,9 @@ class InventarioListView(LoginRequiredMixin, View):
             modo = "tienda"
         else:
             filas = (
-                Inventario.objects.values("producto__id", "producto__nombre", "producto__codigo")
+                Inventario.objects.values(
+                    "producto__id", "producto__nombre", "producto__codigo", "producto__stock_minimo"
+                )
                 .annotate(existencia_total=Sum("existencia"))
                 .order_by("producto__nombre")
             )
@@ -35,6 +38,31 @@ class InventarioListView(LoginRequiredMixin, View):
         return render(request, self.template_name, {
             "tiendas": tiendas, "filas": filas, "modo": modo, "tienda_id": tienda_id,
         })
+
+
+class InventarioExportarView(LoginRequiredMixin, View):
+    def get(self, request):
+        tienda_id = request.GET.get("tienda")
+        if tienda_id:
+            qs = (
+                Inventario.objects.filter(tienda_id=tienda_id)
+                .select_related("producto", "tienda")
+                .order_by("producto__nombre")
+            )
+            encabezados = ["Producto", "Código", "Tienda", "Existencia", "Actualizado"]
+            filas = (
+                [i.producto.nombre, i.producto.codigo or "", str(i.tienda), i.existencia, i.actualizado.strftime("%d/%m/%Y %H:%M")]
+                for i in qs
+            )
+        else:
+            qs = (
+                Inventario.objects.values("producto__nombre", "producto__codigo")
+                .annotate(existencia_total=Sum("existencia"))
+                .order_by("producto__nombre")
+            )
+            encabezados = ["Producto", "Código", "Existencia total"]
+            filas = ([f["producto__nombre"], f["producto__codigo"] or "", f["existencia_total"]] for f in qs)
+        return exportar_filas_excel("inventario.xlsx", "Inventario", encabezados, filas)
 
 
 class TraspasoListView(LoginRequiredMixin, ListView):

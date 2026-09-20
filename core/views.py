@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.db.models import F, Sum
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
@@ -35,6 +36,20 @@ MODULOS = [
 ]
 
 
+def _contar_productos_stock_bajo():
+    """Cuenta productos cuya existencia total (sumando todas las tiendas) ya
+    llegó o cayó debajo de su stock mínimo configurado. Los productos con
+    stock_minimo=0 no tienen alerta configurada y se excluyen."""
+    from inventario.models import Inventario
+
+    return (
+        Inventario.objects.values("producto_id", "producto__stock_minimo")
+        .annotate(total=Sum("existencia"))
+        .filter(producto__stock_minimo__gt=0, total__lte=F("producto__stock_minimo"))
+        .count()
+    )
+
+
 @login_required
 def dashboard(request):
     es_admin = usuario_es_admin(request.user)
@@ -46,6 +61,8 @@ def dashboard(request):
         "es_superusuario_oculto": usuario_es_superusuario_oculto(request.user),
         "tipos_sistema": Personalizacion.TIPOS_SISTEMA,
     }
+    if es_admin:
+        contexto["productos_stock_bajo"] = _contar_productos_stock_bajo()
     if contexto["es_superusuario_oculto"]:
         foto = SnapshotDemo.obtener()
         contexto["snapshot_guardado"] = bool(foto.datos)

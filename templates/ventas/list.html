@@ -12,6 +12,7 @@
     {% for t in tiendas %}<option value="{{ t.id }}" {% if request.GET.tienda == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
   </select>
   <button class="btn">Filtrar</button>
+  <a href="{% url 'ventas:exportar' %}?tienda={{ request.GET.tienda }}" class="btn">⬇️ Exportar a Excel</a>
 </form>
 
 <div class="tabla-wrap">
@@ -30,6 +31,7 @@
   <td>{% if v.estado == 'V' %}<span class="badge badge-ok">Vigente</span>{% else %}<span class="badge badge-off">Anulada</span>{% endif %}</td>
   <td style="display:flex;gap:8px;">
     <a href="{% url 'ventas:detalle' v.numero %}" class="btn btn-sm">Ver / Imprimir</a>
+    <a href="{% url 'ventas:ticket' v.numero %}" class="btn btn-sm">🧾 Ticket</a>
     {% if v.estado == 'V' %}
     <form method="post" action="{% url 'ventas:anular' v.numero %}" onsubmit="return confirm('¿Confirmas anular esta venta? Esto regresa los productos al inventario.');">
       {% csrf_token %}

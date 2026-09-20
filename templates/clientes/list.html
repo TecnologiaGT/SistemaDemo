@@ -9,6 +9,7 @@
 <form method="get" class="barra-acciones">
   <input type="text" name="q" placeholder="Buscar por nombre..." value="{{ request.GET.q }}" style="max-width:280px;">
   <button class="btn">Buscar</button>
+  <a href="{% url 'clientes:exportar' %}?q={{ request.GET.q|default:'' }}" class="btn">⬇️ Exportar a Excel</a>
 </form>
 
 <div class="tabla-wrap">
