@@ -8,3 +8,10 @@ media/
 venv/
 .venv/
 *.egg-info/
+
+/demo_sistema/
+/Claude outputs/
+/Rubbish/
+/.megaignore
+/desktop.ini
+/sistema para demo de clientes.txt
