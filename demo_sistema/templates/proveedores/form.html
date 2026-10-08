@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Proveedor{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>{% if object %}Editar proveedor{% else %}Nuevo proveedor{% endif %}</h1></div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="panel">
+    <div class="form-grid">
+      <div class="campo"><label>Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
+      <div class="campo"><label>NIT / Documento</label>{{ form.nit_documento }}{{ form.nit_documento.errors }}</div>
+      <div class="campo"><label>Email</label>{{ form.email }}{{ form.email.errors }}</div>
+      <div class="campo"><label>Contacto</label>{{ form.contacto }}{{ form.contacto.errors }}</div>
+      <div class="campo"><label><input type="checkbox" name="{{ form.activo.name }}" {% if form.activo.value %}checked{% endif %} style="width:auto;"> Activo</label></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="titulo-pagina"><h1 style="font-size:1.1rem;">Direcciones</h1>
+      <button type="button" id="agregar-direcciones" class="btn btn-sm">+ Agregar dirección</button>
+    </div>
+    {{ direcciones.management_form }}
+    <div class="lista-dinamica" id="formset-direcciones">
+      {% for f in direcciones.forms %}
+      <div class="fila-formset fila" {% if f.DELETE.value %}style="display:none;"{% endif %}>
+        {{ f.id }}
+        <div class="campo"><label>Dirección</label>{{ f.direccion }}</div>
+        <div class="campo"><label>Referencia</label>{{ f.referencia }}</div>
+        <div class="campo" style="flex:0 0 auto;"><label>Principal</label>{{ f.principal }}</div>
+        <div style="display:none;">{{ f.DELETE }}</div>
+        <button type="button" class="btn btn-sm btn-peligro btn-quitar-fila">Quitar</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="titulo-pagina"><h1 style="font-size:1.1rem;">Teléfonos</h1>
+      <button type="button" id="agregar-telefonos" class="btn btn-sm">+ Agregar teléfono</button>
+    </div>
+    {{ telefonos.management_form }}
+    <div class="lista-dinamica" id="formset-telefonos">
+      {% for f in telefonos.forms %}
+      <div class="fila-formset fila" {% if f.DELETE.value %}style="display:none;"{% endif %}>
+        {{ f.id }}
+        <div class="campo"><label>Teléfono</label>{{ f.telefono }}</div>
+        <div class="campo"><label>Etiqueta</label>{{ f.etiqueta }}</div>
+        <div style="display:none;">{{ f.DELETE }}</div>
+        <button type="button" class="btn btn-sm btn-peligro btn-quitar-fila">Quitar</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="barra-acciones">
+    <button type="submit" class="btn btn-primario">Guardar</button>
+    <a href="{% url 'proveedores:list' %}" class="btn">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/formset.js' %}"></script>
+<script>
+  configurarFormset("direcciones");
+  configurarFormset("telefonos");
+</script>
+{% endblock %}

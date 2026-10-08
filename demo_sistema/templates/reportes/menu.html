@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Consultas y Reportes{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Consultas y Reportes</h1><div class="subt">Solo visible para administradores</div></div>
+</div>
+
+<div class="grid-menu">
+  <a class="tarjeta-menu" href="{% url 'reportes:ventas_tienda' %}">
+    <span class="icono">🏪</span>
+    <span class="nombre">Ventas por Tienda</span>
+  </a>
+  <a class="tarjeta-menu" href="{% url 'reportes:ventas_empleado' %}">
+    <span class="icono">🪪</span>
+    <span class="nombre">Ventas por Empleado</span>
+  </a>
+</div>
+{% endblock %}

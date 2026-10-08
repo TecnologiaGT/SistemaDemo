@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}Registrar Lote{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Registrar Lote</h1><div class="subt">Control de fecha de vencimiento por lote de producto</div></div>
+  <a href="{% url 'inventario:lote_list' %}" class="btn">Volver</a>
+</div>
+
+<div class="panel">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="campo">
+        <label>Tienda</label>
+        <select name="tienda" required>
+          <option value="">Selecciona...</option>
+          {% for t in tiendas %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo">
+        <label>Producto</label>
+        <select name="producto" required>
+          <option value="">Selecciona...</option>
+          {% for p in productos %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo">
+        <label>Número de lote (opcional)</label>
+        <input type="text" name="numero_lote" maxlength="50">
+      </div>
+      <div class="campo">
+        <label>Cantidad</label>
+        <input type="number" name="cantidad" min="1" value="1" required>
+      </div>
+      <div class="campo">
+        <label>Fecha de vencimiento</label>
+        <input type="date" name="fecha_vencimiento" required>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primario" style="margin-top:12px;">Registrar lote</button>
+  </form>
+</div>
+{% endblock %}

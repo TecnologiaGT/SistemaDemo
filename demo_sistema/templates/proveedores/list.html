@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}Proveedores{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Proveedores</h1><div class="subt">Proveedores del negocio</div></div>
+  <a href="{% url 'proveedores:create' %}" class="btn btn-primario">+ Nuevo proveedor</a>
+</div>
+
+<form method="get" class="barra-acciones">
+  <input type="text" name="q" placeholder="Buscar por nombre..." value="{{ request.GET.q }}" style="max-width:280px;">
+  <button class="btn">Buscar</button>
+</form>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Nombre</th><th>NIT/Documento</th><th>Contacto</th><th>Teléfonos</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for p in proveedores %}
+<tr>
+  <td>{{ p.nombre }}</td>
+  <td>{{ p.nit_documento|default:"—" }}</td>
+  <td>{{ p.contacto|default:"—" }}</td>
+  <td>{% for t in p.telefonos.all %}{{ t.telefono }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
+  <td>{% if p.activo %}<span class="badge badge-ok">Activo</span>{% else %}<span class="badge badge-off">Inactivo</span>{% endif %}</td>
+  <td style="display:flex;gap:8px;">
+    <a href="{% url 'proveedores:update' p.pk %}" class="btn btn-sm">Editar</a>
+    <form method="post" action="{% url 'proveedores:toggle' p.pk %}" onsubmit="return confirm('¿Confirmas cambiar el estado de este proveedor?');">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if p.activo %}btn-peligro{% else %}btn-exito{% endif %}">{% if p.activo %}Desactivar{% else %}Activar{% endif %}</button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="6">No hay proveedores registrados todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Lotes y Vencimientos{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Lotes y Vencimientos</h1><div class="subt">Control informativo de fechas de vencimiento por lote</div></div>
+  <a href="{% url 'inventario:lote_create' %}" class="btn btn-primario">+ Registrar lote</a>
+</div>
+
+<form method="get" class="barra-acciones">
+  <select name="tienda">
+    <option value="">Todas las tiendas</option>
+    {% for t in tiendas %}<option value="{{ t.id }}" {% if tienda_id == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
+  </select>
+  <button class="btn">Filtrar</button>
+</form>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Producto</th><th>Tienda</th><th>Lote</th><th>Cantidad</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+{% for l in lotes %}
+<tr>
+  <td>{{ l.producto.nombre }}</td>
+  <td>{{ l.tienda }}</td>
+  <td>{{ l.numero_lote|default:"—" }}</td>
+  <td>{{ l.cantidad }}</td>
+  <td>{{ l.fecha_vencimiento|date:"d/m/Y" }}</td>
+  <td>
+    {% if l.estado_vencimiento == 'vencido' %}<span class="badge badge-off">⚠️ Vencido</span>
+    {% elif l.estado_vencimiento == 'proximo' %}<span class="badge badge-off">Vence en {{ l.dias_para_vencer }} día{{ l.dias_para_vencer|pluralize }}</span>
+    {% else %}<span class="badge badge-ok">Vence en {{ l.dias_para_vencer }} días</span>{% endif %}
+  </td>
+  <td>
+    <form method="post" action="{% url 'inventario:lote_eliminar' l.pk %}" onsubmit="return confirm('¿Eliminar este registro de lote? (por ejemplo porque ya se agotó o venció)');">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-peligro">Eliminar</button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="7">No hay lotes registrados todavía.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<div class="panel no-imprimir">
+  <div class="subt">Este control es informativo: te avisa qué lotes están próximos a vencer o vencidos, pero el sistema no descuenta automáticamente por lote al vender (la venta descuenta de la existencia general del producto en la tienda).</div>
+</div>
+{% endblock %}

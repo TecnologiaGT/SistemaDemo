@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Cotización #{{ cotizacion.numero }}{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Cotización #{{ cotizacion.numero }}</h1><div class="subt">{{ cotizacion.fecha|date:"d/m/Y H:i" }} · {{ cotizacion.tienda }}</div></div>
+  <div class="barra-acciones no-imprimir">
+    <button onclick="window.print()" class="btn">🖨️ Imprimir</button>
+    <a href="{% url 'ventas:cotizacion_list' %}" class="btn">Volver</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="form-grid">
+    <div><label>Cliente</label>{{ cotizacion.cliente|default:"Consumidor Final" }}</div>
+    <div><label>Vendedor</label>{{ cotizacion.empleado|default:"—" }}</div>
+    <div><label>Estado</label>
+      {% if cotizacion.estado == 'A' %}<span class="badge badge-ok">Activa</span>
+      {% elif cotizacion.estado == 'C' %}<span class="badge badge-ok">Convertida a venta</span>
+      {% else %}<span class="badge badge-off">Cancelada</span>{% endif %}
+    </div>
+    {% if cotizacion.venta_generada %}<div><label>Venta generada</label><a href="{% url 'ventas:detalle' cotizacion.venta_generada.numero %}">Factura #{{ cotizacion.venta_generada.numero }}</a></div>{% endif %}
+  </div>
+</div>
+
+<div class="tabla-wrap">
+<table class="tabla">
+<thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+<tbody>
+{% for d in cotizacion.detalle.all %}
+<tr><td>{{ d.producto.nombre }}</td><td>{{ d.cantidad }}</td><td>Q {{ d.precio_unitario }}</td><td>Q {{ d.subtotal }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div class="panel" style="text-align:right;">
+  <span class="total-grande">Total: Q {{ cotizacion.total }}</span>
+</div>
+
+{% if cotizacion.estado == 'A' %}
+<div class="panel no-imprimir barra-acciones">
+  <form method="post" action="{% url 'ventas:cotizacion_convertir' cotizacion.numero %}" onsubmit="return confirm('¿Convertir esta cotización en una venta? Esto descontará el inventario.');">
+    {% csrf_token %}
+    <button class="btn btn-primario">Convertir a venta</button>
+  </form>
+  <form method="post" action="{% url 'ventas:cotizacion_anular' cotizacion.numero %}" onsubmit="return confirm('¿Cancelar esta cotización?');">
+    {% csrf_token %}
+    <button class="btn btn-peligro">Cancelar cotización</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo Traspaso{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina"><h1>Nuevo Traspaso</h1><div class="subt">Mover productos entre tiendas</div></div>
+
+<form method="post" id="form-traspaso">
+  {% csrf_token %}
+  <div class="form-caja">
+    <div>
+      <div class="panel">
+        <div class="form-grid">
+          <div class="campo">
+            <label>Tienda origen</label>
+            <select name="tienda_origen" required>
+              <option value="">Selecciona...</option>
+              {% for t in tiendas %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="campo">
+            <label>Tienda destino</label>
+            <select name="tienda_destino" required>
+              <option value="">Selecciona...</option>
+              {% for t in tiendas %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="campo">
+            <label>Encargado</label>
+            <select name="empleado">
+              <option value="">— sin asignar —</option>
+              {% for e in empleados %}<option value="{{ e.id }}" {% if empleado_actual and empleado_actual.id == e.id %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="campo" style="grid-column:1/-1;">
+            <label>Comentario</label>
+            <input type="text" name="comentario">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h1 style="font-size:1.1rem;margin-top:0;">Agregar producto</h1>
+        <div class="form-grid">
+          <div class="campo" style="grid-column:span 2;">
+            <label>Producto</label>
+            <select id="sel-producto">
+              <option value="">Selecciona un producto...</option>
+              {% for p in productos %}
+              <option value="{{ p.id }}" data-nombre="{{ p.nombre }}">{% if p.codigo %}[{{ p.codigo }}] {% endif %}{{ p.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="campo">
+            <label>Cantidad</label>
+            <input type="number" id="in-cantidad" min="1" value="1">
+          </div>
+        </div>
+        <button type="button" id="btn-agregar-linea" class="btn btn-primario">+ Agregar línea</button>
+      </div>
+
+      <div class="panel">
+        <h1 style="font-size:1.1rem;margin-top:0;">Detalle del traspaso</h1>
+        <div class="tabla-wrap">
+          <table class="tabla" id="tabla-carrito">
+            <thead><tr><th>Producto</th><th>Cantidad</th><th></th></tr></thead>
+            <tbody id="cuerpo-carrito">
+              <tr id="fila-vacio"><td colspan="3">Todavía no hay productos agregados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <button type="submit" class="btn btn-primario" style="width:100%;justify-content:center;" id="btn-guardar" disabled>Guardar traspaso</button>
+        <a href="{% url 'inventario:traspaso_list' %}" class="btn" style="width:100%;justify-content:center;margin-top:8px;">Cancelar</a>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const cuerpo = document.getElementById("cuerpo-carrito");
+  const filaVacio = document.getElementById("fila-vacio");
+  const btnGuardar = document.getElementById("btn-guardar");
+
+  function actualizarEstado() {
+    const hayFilas = cuerpo.querySelectorAll(".fila-carrito").length > 0;
+    btnGuardar.disabled = !hayFilas;
+    filaVacio.style.display = hayFilas ? "none" : "";
+  }
+
+  document.getElementById("btn-agregar-linea").addEventListener("click", function () {
+    const sel = document.getElementById("sel-producto");
+    const opt = sel.options[sel.selectedIndex];
+    if (!sel.value) { alert("Selecciona un producto."); return; }
+    const cantidad = parseInt(document.getElementById("in-cantidad").value) || 1;
+
+    const fila = document.createElement("tr");
+    fila.className = "fila-carrito";
+    fila.innerHTML = `
+      <td>${opt.dataset.nombre}<input type="hidden" name="producto_id[]" value="${sel.value}"></td>
+      <td><input type="number" min="1" value="${cantidad}" name="cantidad[]" style="width:80px;"></td>
+      <td><button type="button" class="btn btn-sm btn-peligro btn-quitar-linea">Quitar</button></td>
+    `;
+    cuerpo.appendChild(fila);
+    fila.querySelector(".btn-quitar-linea").addEventListener("click", function () {
+      fila.remove();
+      actualizarEstado();
+    });
+    actualizarEstado();
+    sel.value = "";
+  });
+})();
+</script>
+{% endblock %}

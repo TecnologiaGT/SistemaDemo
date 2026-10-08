@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Sistema{% endblock %} · {{ personalizacion.nombre_sistema }}</title>
+<link rel="manifest" href="{% url 'core:manifest' %}">
+<meta name="theme-color" content="{{ tema_color }}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="T&amp;P Demo">
+<link rel="apple-touch-icon" href="{% static 'pwa/icon-192.png' %}">
+<link rel="icon" href="{% static 'pwa/icon-192.png' %}">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<style>
+  :root {
+    {% for nombre, valor in paleta_variables.items %}--{{ nombre }}: {{ valor }};
+    {% endfor %}
+  }
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<header class="topbar">
+  <a href="{% url 'core:home' %}" class="marca"><span class="punto"></span> {{ personalizacion.nombre_sistema }}</a>
+  <nav>
+    <a href="{% url 'core:home' %}">Inicio</a>
+    <span class="usuario">{{ user.get_full_name|default:user.username }}</span>
+    <form method="post" action="{% url 'core:logout' %}" style="display:inline;margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm">Salir</button>
+    </form>
+  </nav>
+</header>
+{% endif %}
+
+<div class="contenedor">
+  {% if messages %}
+  <div class="mensajes">
+    {% for message in messages %}
+    <div class="mensaje mensaje-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% block contenido %}{% endblock %}
+</div>
+
+{% if user.is_authenticated %}
+<div class="modal-fondo" id="modal-buscador">
+  <div class="modal-caja modal-caja-ancha">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h2 id="modal-buscador-titulo" style="margin:0;font-size:1.05rem;">Buscar</h2>
+      <button type="button" class="btn btn-sm" id="modal-buscador-cerrar">✕</button>
+    </div>
+    <input type="text" id="modal-buscador-input" placeholder="Escribe para buscar...">
+    <div class="tabla-wrap" style="margin-top:12px;">
+      <table class="tabla">
+        <thead id="modal-buscador-encabezado"></thead>
+        <tbody id="modal-buscador-cuerpo"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/buscador.js' %}"></script>
+{% endif %}
+
+{% block extra_js %}{% endblock %}
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("{% url 'core:service_worker' %}").catch(function () {});
+    });
+  }
+</script>
+</body>
+</html>

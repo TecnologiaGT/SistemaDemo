@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo Cierre de Caja{% endblock %}
+{% block contenido %}
+<div class="titulo-pagina">
+  <div><h1>Cierre de Caja</h1><div class="subt">Arqueo desde el último cierre de la tienda</div></div>
+  <a href="{% url 'ventas:cierre_list' %}" class="btn">Ver historial</a>
+</div>
+
+{% if es_admin %}
+<form method="get" class="barra-acciones">
+  <select name="tienda" onchange="this.form.submit()">
+    <option value="">Selecciona una tienda...</option>
+    {% for t in tiendas %}<option value="{{ t.id }}" {% if tienda_sel and tienda_sel.id == t.id %}selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
+  </select>
+</form>
+{% endif %}
+
+{% if tienda_sel %}
+<div class="panel">
+  <h1 style="font-size:1.1rem;margin-top:0;">Resumen — {{ tienda_sel.nombre }}</h1>
+  <div class="subt">Desde {{ desde|date:"d/m/Y H:i" }} hasta ahora · {{ cantidad_ventas }} venta{{ cantidad_ventas|pluralize }}</div>
+  <div class="form-grid" style="margin-top:14px;">
+    <div><label>Efectivo</label>Q {{ totales.efectivo }}</div>
+    <div><label>Tarjeta</label>Q {{ totales.tarjeta }}</div>
+    <div><label>Transferencia</label>Q {{ totales.transferencia }}</div>
+    <div><label>Crédito (no es efectivo en caja)</label>Q {{ totales.credito }}</div>
+  </div>
+</div>
+
+<div class="panel">
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="tienda" value="{{ tienda_sel.id }}">
+    <div class="form-grid">
+      <div class="campo">
+        <label>Efectivo contado físicamente (Q)</label>
+        <input type="number" name="efectivo_contado" min="0" step="0.01" required autofocus>
+        <div class="subt" style="margin-top:4px;">El sistema espera Q {{ totales.efectivo }} en efectivo según las ventas registradas.</div>
+      </div>
+      <div class="campo">
+        <label>Comentario (opcional)</label>
+        <input type="text" name="comentario" maxlength="255">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primario" style="margin-top:12px;">Registrar cierre</button>
+  </form>
+</div>
+{% elif not es_admin %}
+<div class="panel">Tu usuario no tiene una tienda asignada. Pide a un administrador que te asigne una en Empleados.</div>
+{% endif %}
+{% endblock %}
